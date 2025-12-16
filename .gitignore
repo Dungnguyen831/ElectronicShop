@@ -1,0 +1,22 @@
+# Các file biên dịch (Compiled class file)
+*.class
+
+# Thư mục chứa file biên dịch tạm thời
+/build/
+
+# Thư mục chứa file .jar kết quả (Distribution)
+/dist/
+
+# Thư mục cài đặt riêng tư của người dùng (Rất quan trọng phải bỏ qua)
+/nbproject/private/
+
+# Các file sinh ra bởi NetBeans Makefile
+/nbproject/Makefile-*.mk
+/nbproject/Package-*.bash
+
+# File tạm của hệ điều hành (nếu dùng Mac/Windows)
+.DS_Store
+Thumbs.db
+
+# File log lỗi (nếu có)
+*.log
