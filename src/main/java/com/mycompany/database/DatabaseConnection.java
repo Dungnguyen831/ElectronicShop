@@ -27,5 +27,7 @@ public class DatabaseConnection {
     
     public static void main(String[] args) {
         System.out.println(getConnection());
+        System.out.println("Test Github");
     }
 }
+//ĐCM NETBEAN
