@@ -17,6 +17,7 @@ public class DatabaseConnection {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             
+            // Sửa thành tài khoản database của mình
             cons = DriverManager.getConnection("jdbc:mysql://localhost:3306/electronics_shop", "root", "");
         } catch (Exception e) {
             e.printStackTrace();
