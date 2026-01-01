@@ -7,6 +7,7 @@ package com.mycompany.view;
 import com.mycompany.dao.UserDAO;
 import com.mycompany.model.User;
 import com.mycompany.util.Style;
+import com.mycompany.view.Staff.SaleFrame;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -154,7 +155,7 @@ public class LoginFrame extends JFrame {
 
         if (u != null) {
             JOptionPane.showMessageDialog(this, "Đăng nhập thành công!");
-            new MainFrame().setVisible(true);
+            new SaleFrame().setVisible(true);
             this.dispose();
         } else {
             JOptionPane.showMessageDialog(this, "Sai tài khoản hoặc mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
