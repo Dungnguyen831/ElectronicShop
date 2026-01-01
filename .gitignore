@@ -20,3 +20,4 @@ Thumbs.db
 
 # File log lỗi (nếu có)
 *.log
+/target/
