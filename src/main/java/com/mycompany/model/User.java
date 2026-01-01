@@ -8,6 +8,7 @@ package com.mycompany.model;
  *
  * @author Nguyen Anh Dung
  */
+
 public class User {
     private int userId;
     private String username;

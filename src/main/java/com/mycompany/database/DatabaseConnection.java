@@ -6,6 +6,7 @@ package com.mycompany.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 /**
  *
@@ -19,8 +20,7 @@ public class DatabaseConnection {
             
             // Sửa thành tài khoản database của mình
             cons = DriverManager.getConnection("jdbc:mysql://localhost:3306/electronics_shop", "root", "");
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException | SQLException e) {
         }
         
         return cons;
@@ -28,6 +28,9 @@ public class DatabaseConnection {
     
     public static void main(String[] args) {
         System.out.println(getConnection());
+
         System.out.println("Test pull github");
+
     }
 }
+//ĐCM NETBEAN
