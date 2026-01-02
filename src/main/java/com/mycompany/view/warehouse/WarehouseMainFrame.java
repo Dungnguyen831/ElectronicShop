@@ -2,8 +2,12 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.mycompany.view;
+package com.mycompany.view.warehouse;
 
+    
+import com.mycompany.view.warehouse.supplier.SupplierPanel;
+import com.mycompany.view.warehouse.product.ProductPanel;
+import com.mycompany.view.warehouse.category.CategoryPanel;
 import com.mycompany.util.Style;
 import java.awt.*;
 import java.awt.event.*;
@@ -12,20 +16,22 @@ import javax.swing.border.EmptyBorder;
 
 /**
  *
- * @author Nguyen Anh Dung
+ * @author Administrator
  */
-public class MainFrame extends JFrame implements ActionListener {
+public class WarehouseMainFrame extends JFrame implements ActionListener{
     
     private JPanel sidebarPanel;
     private JPanel contentPanel;
     private CardLayout cardLayout;
-
-    // Các nút menu
-    private JButton btnHome, btnProduct, btnSale, btnUser;
-
-    public MainFrame() {
-        initComponents();
+    
+    private JButton btnHome, btnProduct, btnSupplier, btnCategorie;
+   // private final User userLogged; // Biến lưu trữ người dùng đang đăng nhập
+   
+    public WarehouseMainFrame() {
+       // this.userLogged = u; // Gán tham số vào biến toàn cục của class
+        initComponents();    // Khởi tạo các thành phần giao diện của NetBeans 
     }
+
 
     private void initComponents() {
         setTitle("Hệ Thống Quản Lý Điện Tử");
@@ -50,13 +56,13 @@ public class MainFrame extends JFrame implements ActionListener {
         // Tạo các nút menu
         btnHome = createMenuButton("Trang Chủ");
         btnProduct = createMenuButton("Quản Lý Sản Phẩm");
-        btnSale = createMenuButton("Bán Hàng");
-        btnUser = createMenuButton("Quản Lý Nhân Viên");
+        btnSupplier = createMenuButton("Quản Lý Nhà Cung Cấp");
+        btnCategorie = createMenuButton("Phân Loại Sản Phẩm");
 
         sidebarPanel.add(btnHome);
         sidebarPanel.add(btnProduct);
-        sidebarPanel.add(btnSale);
-        sidebarPanel.add(btnUser);
+        sidebarPanel.add(btnSupplier);
+        sidebarPanel.add(btnCategorie);
 
         this.add(sidebarPanel, BorderLayout.WEST);
 
@@ -67,8 +73,10 @@ public class MainFrame extends JFrame implements ActionListener {
         // Thêm các Panel con vào đây (Các thành viên khác sẽ code phần này)
         // Tạm thời ta add các Panel rỗng có màu để test
         contentPanel.add(createDummyPanel("Trang Chủ", Color.WHITE), "HOME");
-        contentPanel.add(createDummyPanel("Màn hình Sản Phẩm (Đang code...)", Color.LIGHT_GRAY), "PRODUCT");
-        contentPanel.add(createDummyPanel("Màn hình Bán Hàng (Đang code...)", Color.CYAN), "SALE");
+        contentPanel.add(new ProductPanel(), "PRODUCT");        
+        contentPanel.add(new SupplierPanel(), "SUPPLIER");
+        contentPanel.add(new CategoryPanel(), "CATEGORIE"
+                + "");
         // Ví dụ sau này: contentPanel.add(new ProductPanel(), "PRODUCT");
 
         this.add(contentPanel, BorderLayout.CENTER);
@@ -109,6 +117,7 @@ public class MainFrame extends JFrame implements ActionListener {
         btn.addActionListener(this);
         return btn;
     }
+
     // Hàm tạo panel giả để test (Xóa sau khi ghép code thật)
     private JPanel createDummyPanel(String text, Color color) {
         JPanel p = new JPanel(new BorderLayout());
@@ -120,14 +129,17 @@ public class MainFrame extends JFrame implements ActionListener {
     }
 
     @Override
+ 
     public void actionPerformed(ActionEvent e) {
-        // Logic chuyển màn hình
         if (e.getSource() == btnHome) {
             cardLayout.show(contentPanel, "HOME");
         } else if (e.getSource() == btnProduct) {
             cardLayout.show(contentPanel, "PRODUCT");
-        } else if (e.getSource() == btnSale) {
-            cardLayout.show(contentPanel, "SALE");
+        } else if (e.getSource() == btnSupplier) {
+            cardLayout.show(contentPanel, "SUPPLIER"); // Phải khớp với tên lúc add
+        } else if (e.getSource() == btnCategorie) {
+            cardLayout.show(contentPanel, "CATEGORIE"); // Thêm cho nút Categorie
         }
     }
+    
 }
