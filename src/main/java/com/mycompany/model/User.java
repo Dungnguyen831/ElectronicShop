@@ -8,6 +8,7 @@ package com.mycompany.model;
  *
  * @author Nguyen Anh Dung
  */
+
 public class User {
     private int userId;
     private String username;
@@ -18,7 +19,8 @@ public class User {
     public User() {
     }
 
-    public User(String username, String password, String fullName, int roleId) {
+    public User( int userId,String username, String password, String fullName, int roleId) {
+        this.userId = userId;
         this.username = username;
         this.password = password;
         this.fullName = fullName;
