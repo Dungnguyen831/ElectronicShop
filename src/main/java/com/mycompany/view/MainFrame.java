@@ -69,6 +69,7 @@ public class MainFrame extends JFrame implements ActionListener {
         contentPanel.add(createDummyPanel("Trang Chủ", Color.WHITE), "HOME");
         contentPanel.add(createDummyPanel("Màn hình Sản Phẩm (Đang code...)", Color.LIGHT_GRAY), "PRODUCT");
         contentPanel.add(createDummyPanel("Màn hình Bán Hàng (Đang code...)", Color.CYAN), "SALE");
+        
         // Ví dụ sau này: contentPanel.add(new ProductPanel(), "PRODUCT");
 
         this.add(contentPanel, BorderLayout.CENTER);
