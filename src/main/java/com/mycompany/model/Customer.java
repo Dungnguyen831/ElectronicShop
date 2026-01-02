@@ -2,10 +2,6 @@ package com.mycompany.model;
 
 import java.sql.Timestamp;
 
-/**
- * Model đại diện cho bảng customers trong database electronics_shop
- * @author Nguyen Anh Dung
- */
 public class Customer {
     private int customerId;      // customer_id: int(11), Primary Key, Auto Increment
     private String fullName;     // full_name: varchar(100)
@@ -66,3 +62,14 @@ public class Customer {
         return "Customer{" + "id=" + customerId + ", name=" + fullName + ", phone=" + phone + ", points=" + points + '}';
     }
 }
+   
+//    public Customer(int customerId, String fullName, String phone, String email, String address, int points) {
+//        this.customerId = customerId;
+//        this.fullName = fullName;
+//        this.phone = phone;
+//        this.email = email;
+//        this.address = address;
+//        this.points = points;
+//    }
+
+

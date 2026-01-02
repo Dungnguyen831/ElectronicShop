@@ -4,10 +4,11 @@
  */
 package com.mycompany.view;
 
+import com.mycompany.view.admin.AdminMainFrame;
 import com.mycompany.dao.UserDAO;
 import com.mycompany.model.User;
 import com.mycompany.util.Style;
-import com.mycompany.view.Staff.SaleFrame;
+import com.mycompany.view.staff.SaleFrame;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -161,14 +162,14 @@ public class LoginFrame extends JFrame {
 
     // Kiểm tra quyền để mở cửa sổ tương ứng
     switch (u.getRoleId()) {
-     //  case 1: // ADMIN
-           // Mở giao diện Quản trị viên
-//            new com.mycompany.view.admin.AdminMainFrame(u).setVisible(true);
-      //      break;
+       case 1: // ADMIN
+        //    Mở giao diện Quản trị viên
+            new com.mycompany.view.admin.AdminMainFrame(u).setVisible(true);
+            break;
 
        case 2: // STAFF (Nhân viên bán hàng)
             // Mở giao diện Bán hàng (Full màn hình cho chuyên nghiệp)
-            com.mycompany.view.Staff.SaleFrame salesFrame = new com.mycompany.view.Staff.SaleFrame(u);
+                com.mycompany.view.staff.SaleFrame salesFrame = new com.mycompany.view.staff.SaleFrame(u);
             salesFrame.setExtendedState(JFrame.MAXIMIZED_BOTH); 
             salesFrame.setVisible(true);
             break;

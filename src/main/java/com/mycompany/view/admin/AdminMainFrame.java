@@ -1,31 +1,35 @@
-package com.mycompany.view.warehouse;
+package com.mycompany.view.admin;
 
-import com.mycompany.model.User;
-import com.mycompany.view.warehouse.supplier.SupplierPanel;
-import com.mycompany.view.warehouse.product.ProductPanel;
-import com.mycompany.view.warehouse.category.CategoryPanel;
 import com.mycompany.util.Style;
+import com.mycompany.model.User;
+import com.mycompany.view.LoginFrame; // Đảm bảo đúng package của LoginFrame
+import com.mycompany.view.admin.UserPanel; // Đảm bảo đúng package
+import com.mycompany.view.admin.CustomerPanel; // Đảm bảo đúng package
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-public class WarehouseMainFrame extends JFrame implements ActionListener {
+/**
+ * @author Nguyen Anh Dung
+ */
+public class AdminMainFrame extends JFrame implements ActionListener {
 
     private JPanel sidebarPanel;
     private JPanel contentPanel;
     private CardLayout cardLayout;
+    private User currentUser;
 
-    private JButton btnHome, btnProduct, btnSupplier, btnCategorie, btnLogout;
-    private final User userLogged; // Đối tượng người dùng từ DB
+    // Các nút menu
+    private JButton btnHome, btnRevenue, btnVoucher, btnUser, btnCustomer, btnLogout;
 
-    public WarehouseMainFrame(User u) {
-        this.userLogged = u;
+    public AdminMainFrame(User user) {
+        this.currentUser = user; 
         initComponents();
+        this.setTitle("Hệ thống Quản lý - Xin chào: " + user.getFullName());
     }
 
     private void initComponents() {
-        setTitle("Hệ Thống Quản Lý Điện Tử");
         setSize(1200, 750);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -38,37 +42,37 @@ public class WarehouseMainFrame extends JFrame implements ActionListener {
         sidebarPanel.setLayout(new java.awt.GridLayout(10, 1, 0, 10)); 
         sidebarPanel.setBorder(new EmptyBorder(20, 10, 20, 10));
 
-        // Hàng 1: Tiêu đề
-        JLabel lblMenu = new JLabel("MENU", JLabel.CENTER);
+        // Hàng 1: Tiêu đề menu
+        JLabel lblMenu = new JLabel("QUẢN TRỊ VIÊN", JLabel.CENTER);
         lblMenu.setFont(Style.FONT_HEADER);
         lblMenu.setForeground(Color.WHITE);
         sidebarPanel.add(lblMenu);
 
-        // Hàng 2-5: Menu chính
+        // Hàng 2-6: Các nút chức năng
         btnHome = createMenuButton("Trang Chủ");
-        btnProduct = createMenuButton("Quản Lý Sản Phẩm");
-        btnSupplier = createMenuButton("Quản Lý Nhà Cung Cấp");
-        btnCategorie = createMenuButton("Phân Loại Sản Phẩm");
+        btnRevenue = createMenuButton("Quản Lý Doanh Thu");
+        btnVoucher = createMenuButton("Quản Lý Voucher");
+        btnUser = createMenuButton("Quản Lý Nhân Viên");
+        btnCustomer = createMenuButton("Quản Lý Khách Hàng");
 
         sidebarPanel.add(btnHome);
-        sidebarPanel.add(btnProduct);
-        sidebarPanel.add(btnSupplier);
-        sidebarPanel.add(btnCategorie);
+        sidebarPanel.add(btnRevenue);
+        sidebarPanel.add(btnVoucher);
+        sidebarPanel.add(btnUser);
+        sidebarPanel.add(btnCustomer);
 
-        // Hàng 6-7: Filler
-        sidebarPanel.add(new JLabel("")); 
+        // Hàng 7: Filler (Ô trống)
         sidebarPanel.add(new JLabel("")); 
 
-        // Hàng 8: Tên (full_name từ bảng user)
-        JLabel lblName = new JLabel( (userLogged != null ? userLogged.getFullName() : "Admin"));
+        // Hàng 8: Hiển thị Tên người dùng
+        JLabel lblName = new JLabel((currentUser != null ? currentUser.getFullName() : "Admin"));
         lblName.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblName.setForeground(Color.WHITE);
         lblName.setBorder(new EmptyBorder(0, 15, 0, 0));
         sidebarPanel.add(lblName);
 
-        // Hàng 9: Chức vụ (role_id từ bảng user)
-        String roleName = (userLogged != null && userLogged.getRoleId() == 1) ? "Quản trị viên" : "Nhân viên";
-        JLabel lblRole = new JLabel("   Chức vụ: " + roleName);
+        // Hàng 9: Hiển thị Chức vụ (Admin có role_id = 1)
+        JLabel lblRole = new JLabel("   Chức vụ: Quản trị viên");
         lblRole.setFont(new Font("Segoe UI", Font.ITALIC, 12));
         lblRole.setForeground(new Color(200, 200, 200));
         lblRole.setBorder(new EmptyBorder(0, 15, 0, 0));
@@ -78,39 +82,39 @@ public class WarehouseMainFrame extends JFrame implements ActionListener {
         setupLogoutButton();
         sidebarPanel.add(btnLogout);
 
-        add(sidebarPanel, BorderLayout.WEST);
+        this.add(sidebarPanel, BorderLayout.WEST);
 
         // --- 2. CONTENT PANEL ---
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
+
         contentPanel.add(createDummyPanel("Trang Chủ", Color.WHITE), "HOME");
-        contentPanel.add(new ProductPanel(), "PRODUCT");        
-        contentPanel.add(new SupplierPanel(), "SUPPLIER");
-        contentPanel.add(new CategoryPanel(), "CATEGORIE");
-        add(contentPanel, BorderLayout.CENTER);
+        contentPanel.add(createDummyPanel("Màn hình báo cáo doanh thu", Color.LIGHT_GRAY), "REVENUE");
+        contentPanel.add(createDummyPanel("Màn hình voucher", Color.LIGHT_GRAY), "VOUCHER");
+        contentPanel.add(new UserPanel(), "USER");
+        contentPanel.add(new CustomerPanel(), "CUSTOMER");
+
+        this.add(contentPanel, BorderLayout.CENTER);
     }
 
     /**
-     * Hàm tạo nút Đăng xuất riêng biệt với màu đỏ và chữ trắng
+     * Hàm tạo nút Đăng xuất riêng biệt (Màu đỏ, chữ trắng)
      */
     private void setupLogoutButton() {
         btnLogout = new JButton("ĐĂNG XUẤT");
         btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnLogout.setForeground(Color.WHITE); // Chữ trắng
-        btnLogout.setBackground(new Color(211, 47, 47)); // Màu đỏ (Material Red)
-        
+        btnLogout.setForeground(Color.WHITE);
+        btnLogout.setBackground(new Color(211, 47, 47)); // Màu đỏ
         btnLogout.setFocusPainted(false);
         btnLogout.setBorderPainted(false);
         btnLogout.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        // Căn chỉnh nội dung nút vào giữa để khác biệt với menu
         btnLogout.setHorizontalAlignment(SwingConstants.CENTER);
 
-        // Hiệu ứng hover riêng cho nút đỏ
+        // Hiệu ứng hover cho nút Đăng xuất
         btnLogout.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                btnLogout.setBackground(new Color(183, 28, 28)); // Đỏ đậm hơn khi hover
+                btnLogout.setBackground(new Color(183, 28, 28));
             }
             @Override
             public void mouseExited(MouseEvent e) {
@@ -120,12 +124,14 @@ public class WarehouseMainFrame extends JFrame implements ActionListener {
 
         btnLogout.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this, 
-                    "Bạn có chắc chắn muốn đăng xuất?", "Xác nhận", 
-                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                    "Bạn có chắc chắn muốn đăng xuất không?", 
+                    "Xác nhận", JOptionPane.YES_NO_OPTION);
+            
             if (confirm == JOptionPane.YES_OPTION) {
-                this.dispose();
+                this.dispose(); // Đóng AdminMainFrame
+                // Mở lại LoginFrame
                 java.awt.EventQueue.invokeLater(() -> {
-                    new com.mycompany.view.LoginFrame().setVisible(true); 
+                    new LoginFrame().setVisible(true);
                 });
             }
         });
@@ -141,6 +147,7 @@ public class WarehouseMainFrame extends JFrame implements ActionListener {
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
         btn.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -153,6 +160,7 @@ public class WarehouseMainFrame extends JFrame implements ActionListener {
                 btn.setBorder(new EmptyBorder(10, 20, 10, 10));
             }
         });
+
         btn.addActionListener(this);
         return btn;
     }
@@ -169,8 +177,9 @@ public class WarehouseMainFrame extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == btnHome) cardLayout.show(contentPanel, "HOME");
-        else if (e.getSource() == btnProduct) cardLayout.show(contentPanel, "PRODUCT");
-        else if (e.getSource() == btnSupplier) cardLayout.show(contentPanel, "SUPPLIER");
-        else if (e.getSource() == btnCategorie) cardLayout.show(contentPanel, "CATEGORIE");
+        else if (e.getSource() == btnRevenue) cardLayout.show(contentPanel, "REVENUE");
+        else if (e.getSource() == btnVoucher) cardLayout.show(contentPanel, "VOUCHER");
+        else if (e.getSource() == btnUser) cardLayout.show(contentPanel, "USER");
+        else if (e.getSource() == btnCustomer) cardLayout.show(contentPanel, "CUSTOMER");
     }
 }
