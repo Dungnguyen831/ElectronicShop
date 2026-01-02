@@ -5,6 +5,7 @@
 package com.mycompany.view.warehouse;
 
     
+import com.mycompany.model.User;
 import com.mycompany.view.warehouse.supplier.SupplierPanel;
 import com.mycompany.view.warehouse.product.ProductPanel;
 import com.mycompany.view.warehouse.category.CategoryPanel;
@@ -25,10 +26,11 @@ public class WarehouseMainFrame extends JFrame implements ActionListener{
     private CardLayout cardLayout;
     
     private JButton btnHome, btnProduct, btnSupplier, btnCategorie;
-   // private final User userLogged; // Biến lưu trữ người dùng đang đăng nhập
+    private final User userLogged; // Biến lưu trữ người dùng đang đăng nhập
    
-    public WarehouseMainFrame() {
-       // this.userLogged = u; // Gán tham số vào biến toàn cục của class
+    public WarehouseMainFrame(User u) {
+        
+        this.userLogged = u; // Gán tham số vào biến toàn cục của class
         initComponents();    // Khởi tạo các thành phần giao diện của NetBeans 
     }
 

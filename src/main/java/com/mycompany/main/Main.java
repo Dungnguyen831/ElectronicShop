@@ -5,7 +5,7 @@
 package com.mycompany.main;
 
 import com.mycompany.view.LoginFrame;
-import com.mycompany.view.warehouse.WarehouseMainFrame;
+//import com.mycompany.view.warehouse.WarehouseMainFrame;
 
 /**
  *
@@ -27,7 +27,7 @@ public class Main {
 
   //       Chạy form đăng nhập
         java.awt.EventQueue.invokeLater(() -> {
-            new WarehouseMainFrame().setVisible(true);
+            new LoginFrame().setVisible(true);
         });
         
     }
