@@ -1,6 +1,6 @@
 package com.mycompany.model;
 
-import java.sql.Timestamp;
+import java.util.Date; // Đã đổi từ sql.Timestamp sang util.Date
 
 public class Product {
     private int productId;
@@ -13,12 +13,14 @@ public class Product {
     private int quantity;
     private String image;
     private int status;
-    private Timestamp createdAt;
+    private Date createdAt; // Đổi kiểu dữ liệu ở đây
+    private String categoryName;
+    private String supplierName;
 
     public Product() {
     }
 
-    public Product(int productId, int categoryId, int supplierId, String productName, String barcode, double importPrice, double salePrice, int quantity, String image, int status, Timestamp createdAt) {
+    public Product(int productId, int categoryId, int supplierId, String productName, String barcode, double importPrice, double salePrice, int quantity, String image, int status, Date createdAt) {
         this.productId = productId;
         this.categoryId = categoryId;
         this.supplierId = supplierId;
@@ -32,6 +34,10 @@ public class Product {
         this.createdAt = createdAt;
     }
 
+    public String getCategoryName() { return categoryName; }
+    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+    public String getSupplierName() { return supplierName; }
+    public void setSupplierName(String supplierName) { this.supplierName = supplierName; }
     // Getters and Setters
     public int getProductId() { return productId; }
     public void setProductId(int productId) { this.productId = productId; }
@@ -63,8 +69,9 @@ public class Product {
     public int getStatus() { return status; }
     public void setStatus(int status) { this.status = status; }
 
-    public Timestamp getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    // Getter và Setter cho createdAt đã được cập nhật kiểu Date
+    public Date getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
     
     @Override
     public String toString() {

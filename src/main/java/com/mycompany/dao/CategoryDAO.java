@@ -12,7 +12,6 @@ public class CategoryDAO {
         List<Category> list = new ArrayList<>();
         // Thêm tùy chọn mặc định
         list.add(new Category(0, "Tất cả danh mục",null));
-        
         String sql = "SELECT * FROM categories";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -26,6 +25,69 @@ public class CategoryDAO {
                 ));
             }
         } catch (Exception e) { e.printStackTrace(); }
+        return list;
+    }
+    
+     public boolean insert(Category c) {
+        String sql = "INSERT INTO categories (category_name, description) VALUES (?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, c.getCategoryName());
+            pstmt.setString(2, c.getDescription());
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) { e.printStackTrace(); return false; }
+    }
+
+    public boolean update(Category c) {
+        String sql = "UPDATE categories SET category_name=?, description=? WHERE category_id=?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, c.getCategoryName());
+            pstmt.setString(2, c.getDescription());
+            pstmt.setInt(3, c.getCategoryId());
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) { e.printStackTrace(); return false; }
+    }
+
+    public void delete(int id) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement("DELETE FROM categories WHERE category_id = ?")) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    public List<Category> selectAll() {
+        List<Category> list = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT * FROM categories")) {
+            while (rs.next()) {
+                Category c = new Category();
+                c.setCategoryId(rs.getInt("category_id"));
+                c.setCategoryName(rs.getString("category_name"));
+                c.setDescription(rs.getString("description"));
+                list.add(c);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+    
+    public List<Category> selectByKeyword(String keyword) {
+        List<Category> list = new ArrayList<>();
+        String sql = "SELECT * FROM categories WHERE category_name LIKE ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + keyword + "%");
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Category c = new Category();
+                c.setCategoryId(rs.getInt("category_id"));
+                c.setCategoryName(rs.getString("category_name"));
+                c.setDescription(rs.getString("description"));
+                list.add(c);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
         return list;
     }
 }
