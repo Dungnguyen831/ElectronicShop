@@ -4,6 +4,7 @@
  */
 package com.mycompany.view;
 
+import com.mycompany.view.admin.AdminMainFrame;
 import com.mycompany.dao.UserDAO;
 import com.mycompany.model.User;
 import com.mycompany.util.Style;
@@ -154,8 +155,32 @@ public class LoginFrame extends JFrame {
 
         if (u != null) {
             JOptionPane.showMessageDialog(this, "Đăng nhập thành công!");
-            new MainFrame().setVisible(true);
+    
             this.dispose();
+
+            // Kiểm tra quyền để mở cửa sổ tương ứng
+            switch (u.getRoleId()) {
+                case 1: // ADMIN
+                    new com.mycompany.view.admin.AdminMainFrame(u).setVisible(true);
+                    break;
+
+                case 2: // STAFF (Nhân viên bán hàng)
+                    // Mở giao diện Bán hàng (Full màn hình cho chuyên nghiệp)
+//                    com.mycompany.view.staff.SalesMainFrame salesFrame = new com.mycompany.view.staff.SalesMainFrame(u);
+//                    salesFrame.setExtendedState(JFrame.MAXIMIZED_BOTH); 
+//                    salesFrame.setVisible(true);
+//                    break;
+
+                case 3: // WAREHOUSE (Thủ kho)
+//                    // Mở giao diện Kho
+//                    new com.mycompany.view.warehouse.WarehouseMainFrame(u).setVisible(true);
+//                    break;
+
+                default:
+                    JOptionPane.showMessageDialog(this, "Tài khoản không có quyền truy cập!");
+                    new LoginFrame().setVisible(true); // Mở lại đăng nhập
+                    break;
+            }
         } else {
             JOptionPane.showMessageDialog(this, "Sai tài khoản hoặc mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
