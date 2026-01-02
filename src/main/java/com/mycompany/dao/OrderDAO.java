@@ -7,7 +7,7 @@ import java.util.List;
 
 public class OrderDAO {
 
-    public boolean createOrder(int userId, int customerId, Integer voucherId, double totalAmount, List<OrderDetail> details) {
+    public boolean createOrder(int userId, int customerId, Integer voucherId, double totalAmount, List<OrderDetail> details, int usedPoints) {
         Connection conn = null;
         PreparedStatement psOrder = null;
         PreparedStatement psDetail = null;
@@ -19,7 +19,7 @@ public class OrderDAO {
             conn = DatabaseConnection.getConnection();
             conn.setAutoCommit(false); // BẮT ĐẦU TRANSACTION
 
-            // 1. Insert ORDER
+            // 1. Insert bảng ORDERS
             String sqlOrder = "INSERT INTO orders(user_id, customer_id, voucher_id, total_amount, payment_method) VALUES(?, ?, ?, ?, 'CASH')";
             psOrder = conn.prepareStatement(sqlOrder, Statement.RETURN_GENERATED_KEYS);
             psOrder.setInt(1, userId);
@@ -31,11 +31,12 @@ public class OrderDAO {
             psOrder.setDouble(4, totalAmount);
             psOrder.executeUpdate();
 
+            // Lấy Order ID vừa tạo
             ResultSet rs = psOrder.getGeneratedKeys();
             int orderId = 0;
             if (rs.next()) orderId = rs.getInt(1);
 
-            // 2. Insert DETAIL & 3. Trừ KHO
+            // 2. Insert ORDER_DETAILS và 3. Trừ Kho PRODUCTS
             String sqlDetail = "INSERT INTO order_details(order_id, product_id, quantity, unit_price) VALUES(?, ?, ?, ?)";
             String sqlStock = "UPDATE products SET quantity = quantity - ? WHERE product_id = ?";
             
@@ -56,7 +57,7 @@ public class OrderDAO {
             psDetail.executeBatch();
             psStock.executeBatch();
 
-            // 4. Trừ VOUCHER
+            // 4. Trừ số lượng VOUCHER (Nếu có dùng)
             if (voucherId != null) {
                 String sqlVoucher = "UPDATE vouchers SET quantity = quantity - 1 WHERE voucher_id = ?";
                 psVoucher = conn.prepareStatement(sqlVoucher);
@@ -64,13 +65,17 @@ public class OrderDAO {
                 psVoucher.executeUpdate();
             }
 
-            // 5. Cộng ĐIỂM
+            // 5. XỬ LÝ ĐIỂM TÍCH LŨY
+            // Tính điểm thưởng mới (100k = 1 điểm)
             int pointsEarned = (int) (totalAmount / 100000);
-            if (pointsEarned > 0) {
-                String sqlPoint = "UPDATE customers SET points = points + ? WHERE customer_id = ?";
+            
+            // Cập nhật điểm cho khách (Trừ điểm dùng + Cộng điểm mới)
+            if (usedPoints > 0 || pointsEarned > 0) {
+                String sqlPoint = "UPDATE customers SET points = points - ? + ? WHERE customer_id = ?";
                 psPoint = conn.prepareStatement(sqlPoint);
-                psPoint.setInt(1, pointsEarned);
-                psPoint.setInt(2, customerId);
+                psPoint.setInt(1, usedPoints);   
+                psPoint.setInt(2, pointsEarned); 
+                psPoint.setInt(3, customerId);
                 psPoint.executeUpdate();
             }
 
