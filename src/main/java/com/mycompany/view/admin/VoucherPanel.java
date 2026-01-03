@@ -18,17 +18,17 @@ public class VoucherPanel extends JPanel {
     private DefaultTableModel tableModel;
     private VoucherDAO dao;
     private JTextField txtSearch;
-    private JComboBox<String> cboFilter; // ComboBox bộ lọc
+    private JComboBox<String> cboFilter;
     
-    // Lưu danh sách gốc để lọc không bị mất dữ liệu
     private List<Voucher> originalList = new ArrayList<>();
-    
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
     public VoucherPanel() {
         this.dao = new VoucherDAO();
+        // Cài đặt strict mode cho ngày tháng (nhập 2025-02-30 sẽ báo lỗi thay vì tự nhảy sang tháng 3)
+        sdf.setLenient(false); 
         initComponents();
-        refreshData(); // Tải dữ liệu lần đầu
+        refreshData();
     }
 
     private void initComponents() {
@@ -40,37 +40,27 @@ public class VoucherPanel extends JPanel {
         JPanel pnlTop = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 5));
         pnlTop.setBackground(Color.WHITE);
 
-        // 1. Tìm kiếm
         JLabel lblSearch = new JLabel("Tìm mã:");
         lblSearch.setFont(Style.FONT_BOLD);
         txtSearch = new JTextField(10);
         txtSearch.setPreferredSize(new Dimension(100, 30));
         JButton btnSearch = createButton("Tìm", Style.COLOR_PRIMARY);
         
-        // 2. Bộ lọc (3 Tiêu chí bạn cần)
-        JLabel lblFilter = new JLabel("Lọc theo:");
+        JLabel lblFilter = new JLabel("Lọc:");
         lblFilter.setFont(Style.FONT_BOLD);
-        String[] filters = {
-            "Tất cả", 
-            "Đang hoạt động", 
-            "Đã khóa", 
-            "Còn hạn dùng", 
-            "Đã hết hạn", 
-            "Hết số lượng"
-        };
+        String[] filters = {"Tất cả", "Đang hoạt động", "Đã khóa", "Còn hạn dùng", "Đã hết hạn", "Hết số lượng"};
         cboFilter = new JComboBox<>(filters);
         cboFilter.setPreferredSize(new Dimension(130, 30));
 
-        // 3. Các nút chức năng
         JButton btnAdd = createButton("Thêm", Style.COLOR_SUCCESS);
         JButton btnEdit = createButton("Sửa", Style.COLOR_PRIMARY);
         JButton btnDelete = createButton("Xóa", Style.COLOR_DANGER);
         JButton btnRefresh = createButton("Reset", Color.GRAY);
 
         pnlTop.add(lblSearch); pnlTop.add(txtSearch); pnlTop.add(btnSearch);
-        pnlTop.add(Box.createHorizontalStrut(15)); 
+        pnlTop.add(Box.createHorizontalStrut(10));
         pnlTop.add(lblFilter); pnlTop.add(cboFilter);
-        pnlTop.add(Box.createHorizontalStrut(15));
+        pnlTop.add(Box.createHorizontalStrut(10));
         pnlTop.add(btnAdd); pnlTop.add(btnEdit); pnlTop.add(btnDelete); pnlTop.add(btnRefresh);
 
         this.add(pnlTop, BorderLayout.NORTH);
@@ -90,29 +80,21 @@ public class VoucherPanel extends JPanel {
         
         this.add(new JScrollPane(table), BorderLayout.CENTER);
 
-        // --- SỰ KIỆN ---
-        
-        // Tìm kiếm
+        // --- EVENTS ---
         btnSearch.addActionListener(e -> {
             String keyword = txtSearch.getText().trim();
-            originalList = dao.search(keyword); // Cập nhật list gốc
-            cboFilter.setSelectedIndex(0);      // Reset lọc
+            originalList = dao.search(keyword);
+            cboFilter.setSelectedIndex(0);
             fillTable(originalList);
         });
 
-        // Chọn bộ lọc
         cboFilter.addActionListener(e -> applyFilter());
-
-        // Thêm
         btnAdd.addActionListener(e -> showDialog(null));
-
-        // Sửa
+        
         btnEdit.addActionListener(e -> {
             int row = table.getSelectedRow();
-            if(row == -1) { JOptionPane.showMessageDialog(this, "Chọn dòng cần sửa!"); return; }
+            if(row == -1) { JOptionPane.showMessageDialog(this, "Chọn voucher cần sửa!"); return; }
             int id = (int) table.getValueAt(row, 0);
-            
-            // Lấy dữ liệu từ bảng đổ lại vào form
             try {
                 String code = (String) table.getValueAt(row, 1);
                 int percent = Integer.parseInt(table.getValueAt(row, 2).toString().replace("%", ""));
@@ -123,85 +105,93 @@ public class VoucherPanel extends JPanel {
                 String statusStr = (String) table.getValueAt(row, 7);
                 int status = statusStr.equals("Hoạt động") ? 1 : 0;
                 
-                // Convert util.Date -> sql.Date cho model
                 Voucher v = new Voucher(id, code, percent, max, new java.sql.Date(start.getTime()), new java.sql.Date(end.getTime()), qty, status);
                 showDialog(v);
             } catch (Exception ex) { ex.printStackTrace(); }
         });
 
-        // Xóa
         btnDelete.addActionListener(e -> deleteVoucher());
-
-        // Reset
-        btnRefresh.addActionListener(e -> {
-            txtSearch.setText("");
-            cboFilter.setSelectedIndex(0);
-            refreshData();
-        });
+        btnRefresh.addActionListener(e -> { txtSearch.setText(""); cboFilter.setSelectedIndex(0); refreshData(); });
     }
 
-    // === CÁC HÀM XỬ LÝ LOGIC ===
+    // === LOGIC NGHIỆP VỤ ===
 
-    // 1. Tải lại dữ liệu gốc từ DB
     private void refreshData() {
         originalList = dao.getAll();
-        applyFilter(); // Gọi lọc để hiển thị đúng theo combobox hiện tại
+        applyFilter();
     }
 
-    // 2. Logic Lọc dữ liệu (Quan trọng)
     private void applyFilter() {
         String criterion = (String) cboFilter.getSelectedItem();
         if (criterion == null) return;
-        
         List<Voucher> filteredList = new ArrayList<>();
-        Date now = new Date(); // Ngày hiện tại
+        Date now = new Date();
 
         for (Voucher v : originalList) {
             boolean match = false;
             switch (criterion) {
-                case "Tất cả": 
-                    match = true; break;
-                case "Đang hoạt động": 
-                    if (v.getStatus() == 1) match = true; break;
-                case "Đã khóa": 
-                    if (v.getStatus() == 0) match = true; break;
-                case "Còn hạn dùng":
-                    // Nếu có ngày kết thúc và chưa qua ngày đó
-                    if (v.getEndDate() != null && !now.after(v.getEndDate())) match = true;
-                    break;
-                case "Đã hết hạn":
-                    // Nếu có ngày kết thúc và đã qua ngày đó
-                    if (v.getEndDate() != null && now.after(v.getEndDate())) match = true;
-                    break;
-                case "Hết số lượng":
-                    if (v.getQuantity() <= 0) match = true; break;
+                case "Tất cả": match = true; break;
+                case "Đang hoạt động": if (v.getStatus() == 1) match = true; break;
+                case "Đã khóa": if (v.getStatus() == 0) match = true; break;
+                case "Còn hạn dùng": if (v.getEndDate() != null && !now.after(v.getEndDate())) match = true; break;
+                case "Đã hết hạn": if (v.getEndDate() != null && now.after(v.getEndDate())) match = true; break;
+                case "Hết số lượng": if (v.getQuantity() <= 0) match = true; break;
             }
-            
             if (match) filteredList.add(v);
         }
         fillTable(filteredList);
     }
 
-    // 3. Đổ dữ liệu vào bảng
     private void fillTable(List<Voucher> list) {
         tableModel.setRowCount(0);
         java.text.DecimalFormat df = new java.text.DecimalFormat("#,###");
-        
         for (Voucher v : list) {
             tableModel.addRow(new Object[]{
-                v.getVoucherId(),
-                v.getCode(),
-                v.getDiscountPercent() + "%",
-                df.format(v.getMaxDiscount()) + " đ",
-                sdf.format(v.getStartDate()),
-                sdf.format(v.getEndDate()),
-                v.getQuantity(),
-                v.getStatus() == 1 ? "Hoạt động" : "Đã khóa"
+                v.getVoucherId(), v.getCode(), v.getDiscountPercent() + "%", df.format(v.getMaxDiscount()) + " đ",
+                sdf.format(v.getStartDate()), sdf.format(v.getEndDate()), v.getQuantity(), v.getStatus() == 1 ? "Hoạt động" : "Đã khóa"
             });
         }
     }
 
-    // 4. Hộp thoại Thêm/Sửa
+    // === FORM VALIDATION (QUAN TRỌNG: MỚI THÊM) ===
+    private String validateInput(String code, String percentStr, String maxStr, String startStr, String endStr, String qtyStr) {
+        // 1. Check rỗng
+        if (code.isEmpty() || percentStr.isEmpty() || maxStr.isEmpty() || startStr.isEmpty() || endStr.isEmpty() || qtyStr.isEmpty()) {
+            return "Vui lòng nhập đầy đủ tất cả các trường!";
+        }
+        
+        // 2. Check Mã Code
+        if (code.contains(" ")) return "Mã Voucher không được chứa khoảng trắng!";
+        if (code.length() < 3) return "Mã Voucher phải từ 3 ký tự trở lên!";
+
+        try {
+            // 3. Check Phần trăm giảm
+            int percent = Integer.parseInt(percentStr);
+            if (percent <= 0 || percent > 100) return "Phần trăm giảm phải từ 1 đến 100!";
+
+            // 4. Check Giảm tối đa
+            double max = Double.parseDouble(maxStr);
+            if (max < 0) return "Số tiền giảm tối đa không được âm!";
+
+            // 5. Check Số lượng
+            int qty = Integer.parseInt(qtyStr);
+            if (qty <= 0) return "Số lượng phát hành phải lớn hơn 0!";
+
+            // 6. Check Ngày tháng
+            Date start = sdf.parse(startStr);
+            Date end = sdf.parse(endStr);
+            
+            if (end.before(start)) return "Ngày kết thúc phải SAU ngày bắt đầu!";
+            
+        } catch (NumberFormatException e) {
+            return "Vui lòng nhập đúng định dạng số cho: %, Tiền giảm, Số lượng!";
+        } catch (ParseException e) {
+            return "Ngày tháng phải đúng định dạng yyyy-MM-dd (Ví dụ: 2025-01-30)!";
+        }
+
+        return null; // Không có lỗi
+    }
+
     private void showDialog(Voucher v) {
         boolean isEdit = (v != null);
         
@@ -214,10 +204,12 @@ public class VoucherPanel extends JPanel {
         JCheckBox chkActive = new JCheckBox("Đang hoạt động");
         chkActive.setSelected(isEdit ? (v.getStatus() == 1) : true);
 
+        if (isEdit) txtCode.setEditable(false); // Không cho sửa mã khi edit
+
         JPanel panel = new JPanel(new GridLayout(0, 2, 10, 10));
-        panel.add(new JLabel("Mã Code:")); panel.add(txtCode);
+        panel.add(new JLabel("Mã Code (VD: SALE50):")); panel.add(txtCode);
         panel.add(new JLabel("Giảm (%):")); panel.add(txtPercent);
-        panel.add(new JLabel("Giảm tối đa:")); panel.add(txtMax);
+        panel.add(new JLabel("Giảm tối đa (VNĐ):")); panel.add(txtMax);
         panel.add(new JLabel("Ngày BĐ (yyyy-MM-dd):")); panel.add(txtStart);
         panel.add(new JLabel("Ngày KT (yyyy-MM-dd):")); panel.add(txtEnd);
         panel.add(new JLabel("Số lượng:")); panel.add(txtQty);
@@ -226,22 +218,29 @@ public class VoucherPanel extends JPanel {
         int opt = JOptionPane.showConfirmDialog(this, panel, isEdit ? "Sửa Voucher" : "Thêm Voucher", JOptionPane.OK_CANCEL_OPTION);
         
         if (opt == JOptionPane.OK_OPTION) {
+            // --- GỌI HÀM VALIDATE ---
+            String error = validateInput(
+                txtCode.getText().trim(), 
+                txtPercent.getText().trim(), 
+                txtMax.getText().trim(), 
+                txtStart.getText().trim(), 
+                txtEnd.getText().trim(), 
+                txtQty.getText().trim()
+            );
+
+            if (error != null) {
+                JOptionPane.showMessageDialog(this, error, "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
+                return; // Dừng lại, không lưu
+            }
+            // ------------------------
+
             try {
-                if(txtCode.getText().trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Nhập mã code!"); return;
-                }
-                
                 Voucher newV = new Voucher();
                 newV.setCode(txtCode.getText().trim().toUpperCase());
                 newV.setDiscountPercent(Integer.parseInt(txtPercent.getText().trim()));
                 newV.setMaxDiscount(Double.parseDouble(txtMax.getText().trim()));
-                
-                // Chuyển String -> util.Date -> sql.Date
-                java.util.Date dateStart = sdf.parse(txtStart.getText().trim());
-                java.util.Date dateEnd = sdf.parse(txtEnd.getText().trim());
-                newV.setStartDate(new java.sql.Date(dateStart.getTime()));
-                newV.setEndDate(new java.sql.Date(dateEnd.getTime()));
-                
+                newV.setStartDate(new java.sql.Date(sdf.parse(txtStart.getText().trim()).getTime()));
+                newV.setEndDate(new java.sql.Date(sdf.parse(txtEnd.getText().trim()).getTime()));
                 newV.setQuantity(Integer.parseInt(txtQty.getText().trim()));
                 newV.setStatus(chkActive.isSelected() ? 1 : 0);
 
@@ -256,13 +255,11 @@ public class VoucherPanel extends JPanel {
                         JOptionPane.showMessageDialog(this, "Thêm thành công!");
                         refreshData();
                     } else {
-                        JOptionPane.showMessageDialog(this, "Lỗi: Mã code có thể bị trùng!");
+                        JOptionPane.showMessageDialog(this, "Lỗi: Mã code đã tồn tại!");
                     }
                 }
-            } catch (ParseException ex) {
-                JOptionPane.showMessageDialog(this, "Ngày tháng phải đúng định dạng yyyy-MM-dd");
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Lỗi nhập liệu: " + ex.getMessage());
+                ex.printStackTrace();
             }
         }
     }
@@ -284,10 +281,8 @@ public class VoucherPanel extends JPanel {
 
     private JButton createButton(String text, Color bg) {
         JButton btn = new JButton(text);
-        btn.setBackground(bg);
-        btn.setForeground(Color.WHITE);
-        btn.setFont(Style.FONT_BOLD);
-        btn.setFocusPainted(false);
+        btn.setBackground(bg); btn.setForeground(Color.WHITE);
+        btn.setFont(Style.FONT_BOLD); btn.setFocusPainted(false);
         return btn;
     }
 }
