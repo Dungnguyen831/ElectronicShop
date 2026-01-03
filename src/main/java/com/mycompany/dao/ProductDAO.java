@@ -40,7 +40,7 @@ public class ProductDAO {
                 p.setProductName(rs.getString("product_name"));
                 p.setBarcode(rs.getString("barcode"));
                 p.setSalePrice(rs.getDouble("sale_price"));
-                p.setQuantity(rs.getInt("quantity"));
+                p.setQuantity(rs.getInt("quantity")); // Hàm này bạn viết đúng
                 p.setImage(rs.getString("image"));
                 list.add(p);
             }
@@ -48,7 +48,7 @@ public class ProductDAO {
         return list;
     }
 
-    // Hàm phụ trợ để lấy tên sản phẩm hiển thị trong giỏ hàng
+    // --- HÀM NÀY BỊ THIẾU LOGIC, ĐÃ SỬA LẠI ---
     public Product getProductById(int id) {
         String sql = "SELECT * FROM products WHERE product_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -60,6 +60,15 @@ public class ProductDAO {
                 p.setProductId(rs.getInt("product_id"));
                 p.setProductName(rs.getString("product_name"));
                 p.setSalePrice(rs.getDouble("sale_price"));
+                
+                // --- DÒNG QUAN TRỌNG BẠN BỊ THIẾU ---
+                p.setQuantity(rs.getInt("quantity")); 
+                // ------------------------------------
+                
+                // Tiện thể lấy luôn mấy cái khác cho đủ bộ nếu cần
+                p.setBarcode(rs.getString("barcode"));
+                p.setImage(rs.getString("image"));
+                
                 return p;
             }
         } catch (Exception e) { e.printStackTrace(); }
