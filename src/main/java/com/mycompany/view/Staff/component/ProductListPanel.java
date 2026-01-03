@@ -1,4 +1,4 @@
-package com.mycompany.view.component;
+package com.mycompany.view.Staff.component;
 
 import com.mycompany.dao.CategoryDAO;
 import com.mycompany.dao.ProductDAO;

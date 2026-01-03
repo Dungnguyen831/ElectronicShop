@@ -28,8 +28,7 @@ public class Main {
   //       Chạy form đăng nhập
         java.awt.EventQueue.invokeLater(() -> {
             new LoginFrame().setVisible(true);
-        });
-        
+        }); 
     }
     
 }
