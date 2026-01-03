@@ -5,6 +5,7 @@ import com.mycompany.model.User;
 import com.mycompany.view.LoginFrame; // Đảm bảo đúng package của LoginFrame
 import com.mycompany.view.admin.UserPanel; // Đảm bảo đúng package
 import com.mycompany.view.admin.CustomerPanel; // Đảm bảo đúng package
+import com.mycompany.view.admin.HomePanel;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -95,7 +96,7 @@ public class AdminMainFrame extends JFrame implements ActionListener {
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
 
-        contentPanel.add(createDummyPanel("Trang Chủ", Color.WHITE), "HOME");
+        contentPanel.add(new HomePanel(), "HOME");
         contentPanel.add(createDummyPanel("Màn hình báo cáo doanh thu", Color.LIGHT_GRAY), "REVENUE");
         contentPanel.add(createDummyPanel("Màn hình voucher", Color.LIGHT_GRAY), "VOUCHER");
         contentPanel.add(new UserPanel(), "USER");
