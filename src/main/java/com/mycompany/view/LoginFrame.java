@@ -4,10 +4,11 @@
  */
 package com.mycompany.view;
 
+import com.mycompany.view.admin.AdminMainFrame;
 import com.mycompany.dao.UserDAO;
 import com.mycompany.model.User;
 import com.mycompany.util.Style;
-import com.mycompany.view.Staff.SaleFrame;
+import com.mycompany.view.staff.SaleFrame;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -154,9 +155,35 @@ public class LoginFrame extends JFrame {
         User u = dao.checkLogin(user, pass);
 
         if (u != null) {
-            JOptionPane.showMessageDialog(this, "Đăng nhập thành công!");
-            new SaleFrame().setVisible(true);
-            this.dispose();
+           JOptionPane.showMessageDialog(this, "Đăng nhập thành công!");
+    
+    // Đóng form đăng nhập
+    this.dispose();
+
+    // Kiểm tra quyền để mở cửa sổ tương ứng
+    switch (u.getRoleId()) {
+       case 1: // ADMIN
+        //    Mở giao diện Quản trị viên
+            new com.mycompany.view.admin.AdminMainFrame(u).setVisible(true);
+            break;
+
+       case 2: // STAFF (Nhân viên bán hàng)
+            // Mở giao diện Bán hàng (Full màn hình cho chuyên nghiệp)
+                com.mycompany.view.staff.SaleFrame salesFrame = new com.mycompany.view.staff.SaleFrame(u);
+            salesFrame.setExtendedState(JFrame.MAXIMIZED_BOTH); 
+            salesFrame.setVisible(true);
+            break;
+
+        case 3: // WAREHOUSE (Thủ kho)
+      //       Mở giao diện Kho
+            new com.mycompany.view.warehouse.WarehouseMainFrame(u).setVisible(true);
+            break;
+            
+        default:
+            JOptionPane.showMessageDialog(this, "Tài khoản không có quyền truy cập!");
+            new LoginFrame().setVisible(true); // Mở lại đăng nhập
+            break;
+    }
         } else {
             JOptionPane.showMessageDialog(this, "Sai tài khoản hoặc mật khẩu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }

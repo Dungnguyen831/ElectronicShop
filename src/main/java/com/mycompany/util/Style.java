@@ -30,4 +30,8 @@ public class Style {
     // 3. Border hiện đại (Chỉ gạch chân dưới)
     public static final Border BORDER_BOTTOM_FOCUS = BorderFactory.createMatteBorder(0, 0, 2, 0, COLOR_PRIMARY);
     public static final Border BORDER_BOTTOM_NORMAL = BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY);
+
+    
+    public static final Color COLOR_SUCCESS = new Color(46, 204, 113); // Màu Xanh lá (Emerald) - Dùng cho nút Thêm/Lưu
+    public static final Color COLOR_DANGER = new Color(231, 76, 60);   // Màu Đỏ (Alizarin) - Dùng cho nút Xóa/Hủy
 }

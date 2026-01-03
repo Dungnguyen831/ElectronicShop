@@ -1,23 +1,16 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.mycompany.model;
 
-/**
- *
- * @author admin
- */
 public class Category {
     private int categoryId;
     private String categoryName;
     private String description;
+
+    public Category() {}
     public Category(int categoryId, String categoryName, String description) {
         this.categoryId = categoryId;
         this.categoryName = categoryName;
         this.description = description;
     }
-     public Category() {}
     // Getters và Setters khớp với database
     public int getCategoryId() { return categoryId; }
     public void setCategoryId(int categoryId) { this.categoryId = categoryId; }
