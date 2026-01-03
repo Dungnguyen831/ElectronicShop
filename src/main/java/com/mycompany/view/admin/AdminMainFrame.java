@@ -64,21 +64,28 @@ public class AdminMainFrame extends JFrame implements ActionListener {
         // Hàng 7: Filler (Ô trống)
         sidebarPanel.add(new JLabel("")); 
 
-        // Hàng 8: Hiển thị Tên người dùng
-        JLabel lblName = new JLabel((currentUser != null ? currentUser.getFullName() : "Admin"));
-        lblName.setFont(new Font("Segoe UI", Font.BOLD, 14));
+          // Hàng 8: Tên người dùng (full_name)
+        // Bỏ hoàn toàn Border, dùng JLabel.CENTER để căn giữa tuyệt đối
+        JLabel lblName = new JLabel(currentUser != null ? currentUser.getFullName() : "Admin", JLabel.CENTER);
+        lblName.setFont(new Font("Segoe UI", Font.BOLD, 15));
         lblName.setForeground(Color.WHITE);
-        lblName.setBorder(new EmptyBorder(0, 15, 0, 0));
         sidebarPanel.add(lblName);
 
-        // Hàng 9: Hiển thị Chức vụ (Admin có role_id = 1)
-        JLabel lblRole = new JLabel("   Chức vụ: Quản trị viên");
+        // Hàng 9: Chức vụ dựa trên role_id
+        String roleName = "Nhân viên"; // Giá trị mặc định
+        if (currentUser != null) {
+            int role = currentUser.getRoleId();
+            if (role == 1) roleName = "Quản trị viên";
+            else if (role == 2) roleName = "Nhân viên bán hàng";
+            else if (role == 3) roleName = "Nhân viên thủ kho";
+        }
+        
+        JLabel lblRole = new JLabel("Chức vụ: " + roleName, JLabel.CENTER);
         lblRole.setFont(new Font("Segoe UI", Font.ITALIC, 12));
-        lblRole.setForeground(new Color(200, 200, 200));
-        lblRole.setBorder(new EmptyBorder(0, 15, 0, 0));
+        lblRole.setForeground(new Color(220, 220, 220));
         sidebarPanel.add(lblRole);
 
-        // Hàng 10: Nút Đăng xuất tạo riêng
+        // Hàng 10: Nút Đăng xuất (đã được setupLogoutButton định dạng riêng)
         setupLogoutButton();
         sidebarPanel.add(btnLogout);
 

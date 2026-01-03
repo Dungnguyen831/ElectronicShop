@@ -62,7 +62,12 @@ public class SupplierDAO {
             e.printStackTrace();
         }
     }
-
+    //hàm check số ddienj thoại
+    private boolean isValidPhone(String phone) {
+        // Regex: Bắt đầu bằng 0, theo sau là 9 chữ số (tổng 10 số)
+        String regex = "^0\\d{9}$"; 
+        return phone.matches(regex);
+    }
     /**
      * Lấy toàn bộ danh sách nhà cung cấp
      */

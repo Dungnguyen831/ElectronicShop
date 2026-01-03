@@ -49,14 +49,35 @@ public class SupplierDialog extends JDialog {
         JButton btnCancel = new JButton("Hủy");
 
         // Sự kiện Lưu dữ liệu
+       // Sự kiện Lưu dữ liệu
         btnSave.addActionListener(e -> {
-            // Gán dữ liệu vào model Supplier (Lưu ý: dùng đúng tên method set đã sửa)
-            supplier.setSupplierName(txtName.getText().trim());
-            supplier.setContactPerson(txtContact.getText().trim()); // Đổi thành contactPerson
-            supplier.setPhone(txtPhone.getText().trim());
-            supplier.setAddress(txtAddress.getText().trim());
-            supplier.setIsActive(chkActive.isSelected()); // Gán giá trị boolean
-            
+            // 1. Lấy dữ liệu và trim khoảng trắng
+            String name = txtName.getText().trim();
+            String contact = txtContact.getText().trim();
+            String phone = txtPhone.getText().trim();
+            String address = txtAddress.getText().trim();
+
+            // 2. Kiểm tra ràng buộc không được để trống
+            if (name.isEmpty() || contact.isEmpty() || phone.isEmpty() || address.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ tất cả các trường thông tin!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // 3. Ràng buộc số điện thoại: Phải là số, bắt đầu bằng 0 và đúng 10 chữ số
+            // Regex: ^0 (bắt đầu bằng 0), \\d{9} (9 chữ số tiếp theo), $ (kết thúc)
+            if (!phone.matches("^0\\d{9}$")) {
+                JOptionPane.showMessageDialog(this, "Số điện thoại không hợp lệ!\n(Phải bắt đầu bằng số 0 và có đúng 10 chữ số)", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
+                txtPhone.requestFocus(); // Đưa con trỏ về ô số điện thoại để sửa
+                return;
+            }
+
+            // 4. Nếu vượt qua các kiểm tra trên, tiến hành gán dữ liệu vào model
+            supplier.setSupplierName(name);
+            supplier.setContactPerson(contact); 
+            supplier.setPhone(phone);
+            supplier.setAddress(address);
+            supplier.setIsActive(chkActive.isSelected()); 
+
             confirmed = true;
             dispose();
         });
