@@ -2,9 +2,10 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.mycompany.view;
+package com.mycompany.view.admin;
 
 import com.mycompany.util.Style;
+import com.mycompany.model.User;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -14,17 +15,21 @@ import javax.swing.border.EmptyBorder;
  *
  * @author Nguyen Anh Dung
  */
-public class MainFrame extends JFrame implements ActionListener {
+public class AdminMainFrame extends JFrame implements ActionListener {
     
     private JPanel sidebarPanel;
     private JPanel contentPanel;
     private CardLayout cardLayout;
+    private User currentUser;
 
     // Các nút menu
-    private JButton btnHome, btnProduct, btnSale, btnUser;
+    private JButton btnHome, btnRevenue, btnVoucher, btnUser, btnCustomer, btnOrder;
 
-    public MainFrame() {
-        initComponents();
+    public AdminMainFrame(User user) { 
+        this.currentUser = user; // 3. Gán dữ liệu nhận được vào biến của class
+        initComponents(); // Hàm này của NetBeans tự sinh, giữ nguyên
+        
+        this.setTitle("Xin chào Admin: " + user.getFullName());
     }
 
     private void initComponents() {
@@ -49,14 +54,18 @@ public class MainFrame extends JFrame implements ActionListener {
 
         // Tạo các nút menu
         btnHome = createMenuButton("Trang Chủ");
-        btnProduct = createMenuButton("Quản Lý Sản Phẩm");
-        btnSale = createMenuButton("Bán Hàng");
+        btnRevenue = createMenuButton("Quản Lý Doanh Thu");
+        btnVoucher = createMenuButton("Quản Lý Voucher");
         btnUser = createMenuButton("Quản Lý Nhân Viên");
+        btnCustomer = createMenuButton("Quản Lý Khách Hàng");
+        btnOrder = createMenuButton("Quản Lý Đơn Hàng");
 
         sidebarPanel.add(btnHome);
-        sidebarPanel.add(btnProduct);
-        sidebarPanel.add(btnSale);
+        sidebarPanel.add(btnRevenue);
+        sidebarPanel.add(btnVoucher);
         sidebarPanel.add(btnUser);
+        sidebarPanel.add(btnCustomer);
+        sidebarPanel.add(btnOrder);
 
         this.add(sidebarPanel, BorderLayout.WEST);
 
@@ -67,8 +76,11 @@ public class MainFrame extends JFrame implements ActionListener {
         // Thêm các Panel con vào đây (Các thành viên khác sẽ code phần này)
         // Tạm thời ta add các Panel rỗng có màu để test
         contentPanel.add(createDummyPanel("Trang Chủ", Color.WHITE), "HOME");
-        contentPanel.add(createDummyPanel("Màn hình Sản Phẩm (Đang code...)", Color.LIGHT_GRAY), "PRODUCT");
-        contentPanel.add(createDummyPanel("Màn hình Bán Hàng (Đang code...)", Color.CYAN), "SALE");
+        contentPanel.add(createDummyPanel("Màn hình voucher (Đang code...)", Color.LIGHT_GRAY), "VOUCHER");
+        contentPanel.add(createDummyPanel("Màn hình báo cáo doanh thu (Đang code...)", Color.LIGHT_GRAY), "REVENUE");
+        contentPanel.add(new UserPanel(), "USER");
+        contentPanel.add(new CustomerPanel(), "CUSTOMER");
+        contentPanel.add(new OrderPanel(), "ORDER");
         
         // Ví dụ sau này: contentPanel.add(new ProductPanel(), "PRODUCT");
 
@@ -126,10 +138,17 @@ public class MainFrame extends JFrame implements ActionListener {
         // Logic chuyển màn hình
         if (e.getSource() == btnHome) {
             cardLayout.show(contentPanel, "HOME");
-        } else if (e.getSource() == btnProduct) {
-            cardLayout.show(contentPanel, "PRODUCT");
-        } else if (e.getSource() == btnSale) {
-            cardLayout.show(contentPanel, "SALE");
+        } else if (e.getSource() == btnRevenue) {
+            cardLayout.show(contentPanel, "REVENUE");
+        } else if (e.getSource() == btnUser) {
+            cardLayout.show(contentPanel, "USER");
+        } else if (e.getSource() == btnCustomer) {
+            cardLayout.show(contentPanel, "CUSTOMER");
+        } else if (e.getSource() == btnVoucher) {
+            cardLayout.show(contentPanel, "VOUCHER");
+        } else if (e.getSource() == btnOrder) {
+            cardLayout.show(contentPanel, "ORDER");
         }
+        
     }
 }

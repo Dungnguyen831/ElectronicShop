@@ -1,45 +1,33 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.mycompany.model;
 
-import java.sql.Timestamp;
-
 /**
- * Model đại diện cho bảng customers trong database electronics_shop
+ *
  * @author Nguyen Anh Dung
  */
 public class Customer {
-    private int customerId;      // customer_id: int(11), Primary Key, Auto Increment
-    private String fullName;     // full_name: varchar(100)
-    private String phone;        // phone: varchar(20), Unique Key
-    private String email;        // email: varchar(100), Nullable
-    private String address;      // address: varchar(255), Nullable
-    private int points;          // points: int(11), Default 0
-    private Timestamp createdAt; // created_at: datetime, Default current_timestamp()
+    private int customerId;
+    private String fullName;
+    private String phone;
+    private String email;
+    private String address;
+    private int points;
 
-    // Constructor mặc định
-    public Customer() {
-    }
+    public Customer() {}
 
-    // Constructor đầy đủ tham số (thường dùng khi lấy dữ liệu từ DB)
-    public Customer(int customerId, String fullName, String phone, String email, String address, int points, Timestamp createdAt) {
+    public Customer(int customerId, String fullName, String phone, String email, String address, int points) {
         this.customerId = customerId;
         this.fullName = fullName;
         this.phone = phone;
         this.email = email;
         this.address = address;
         this.points = points;
-        this.createdAt = createdAt;
     }
 
-    // Constructor không có ID và Timestamp (thường dùng khi thêm mới khách hàng)
-    public Customer(String fullName, String phone, String email, String address, int points) {
-        this.fullName = fullName;
-        this.phone = phone;
-        this.email = email;
-        this.address = address;
-        this.points = points;
-    }
-
-    // Getter và Setter
+    // Getter & Setter (Bắt buộc phải có đủ)
     public int getCustomerId() { return customerId; }
     public void setCustomerId(int customerId) { this.customerId = customerId; }
 
@@ -57,12 +45,4 @@ public class Customer {
 
     public int getPoints() { return points; }
     public void setPoints(int points) { this.points = points; }
-
-    public Timestamp getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
-
-    @Override
-    public String toString() {
-        return "Customer{" + "id=" + customerId + ", name=" + fullName + ", phone=" + phone + ", points=" + points + '}';
-    }
 }
