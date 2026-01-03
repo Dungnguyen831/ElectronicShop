@@ -97,7 +97,7 @@ public class AdminMainFrame extends JFrame implements ActionListener {
 
         contentPanel.add(createDummyPanel("Trang Chủ", Color.WHITE), "HOME");
         contentPanel.add(createDummyPanel("Màn hình báo cáo doanh thu", Color.LIGHT_GRAY), "REVENUE");
-        contentPanel.add(createDummyPanel("Màn hình voucher", Color.LIGHT_GRAY), "VOUCHER");
+        contentPanel.add(new com.mycompany.view.admin.VoucherPanel(), "VOUCHER");
         contentPanel.add(new UserPanel(), "USER");
         contentPanel.add(new CustomerPanel(), "CUSTOMER");
 
