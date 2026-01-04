@@ -22,7 +22,7 @@ public class AdminMainFrame extends JFrame implements ActionListener {
 
     // Các nút menu
     private JButton btnHome, btnRevenue, btnVoucher, btnUser, btnCustomer, btnLogout;
-
+    private JButton currentSelectedButton = null; // Lưu nút đang được chọn
     public AdminMainFrame(User user) {
         this.currentUser = user; 
         initComponents();
@@ -155,16 +155,21 @@ public class AdminMainFrame extends JFrame implements ActionListener {
         btn.setBorderPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        btn.addMouseListener(new MouseAdapter() {
-            @Override
+           btn.addMouseListener(new MouseAdapter() {
+         @Override
             public void mouseEntered(MouseEvent e) {
+                // Luôn đổi màu khi di chuột vào
                 btn.setBackground(Style.COLOR_BG_LEFT);
                 btn.setBorder(BorderFactory.createMatteBorder(0, 5, 0, 0, Color.WHITE));
             }
+
             @Override
             public void mouseExited(MouseEvent e) {
-                btn.setBackground(Style.COLOR_PRIMARY);
-                btn.setBorder(new EmptyBorder(10, 20, 10, 10));
+                // CHỈ reset màu nếu nút này KHÔNG PHẢI là nút đang được chọn
+                if (btn != currentSelectedButton) {
+                    btn.setBackground(Style.COLOR_PRIMARY);
+                    btn.setBorder(new EmptyBorder(10, 20, 10, 10));
+                }
             }
         });
 
@@ -183,6 +188,19 @@ public class AdminMainFrame extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+          JButton clickedButton = (JButton) e.getSource();
+
+        // 1. Reset màu cho nút cũ (nếu có)
+        if (currentSelectedButton != null) {
+            currentSelectedButton.setBackground(Style.COLOR_PRIMARY);
+            currentSelectedButton.setBorder(new EmptyBorder(10, 20, 10, 10));
+        }
+
+        // 2. Thiết lập màu sẫm cho nút mới được chọn
+        clickedButton.setBackground(Style.COLOR_BG_LEFT); // Màu sẫm khi active
+        clickedButton.setBorder(BorderFactory.createMatteBorder(0, 5, 0, 0, Color.WHITE));
+        currentSelectedButton = clickedButton;
+
         if (e.getSource() == btnHome) cardLayout.show(contentPanel, "HOME");
         else if (e.getSource() == btnRevenue) cardLayout.show(contentPanel, "REVENUE");
         else if (e.getSource() == btnVoucher) cardLayout.show(contentPanel, "VOUCHER");

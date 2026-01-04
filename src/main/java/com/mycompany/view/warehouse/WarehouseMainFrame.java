@@ -5,6 +5,7 @@ import com.mycompany.view.warehouse.supplier.SupplierPanel;
 import com.mycompany.view.warehouse.product.ProductPanel;
 import com.mycompany.view.warehouse.category.CategoryPanel;
 import com.mycompany.util.Style;
+import com.mycompany.view.warehouse.Import.ListImport;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -16,9 +17,9 @@ public class WarehouseMainFrame extends JFrame implements ActionListener {
     private JPanel contentPanel;
     private CardLayout cardLayout;
 
-    private JButton btnHome, btnProduct, btnSupplier, btnCategorie, btnLogout;
+    private JButton btnListImport, btnProduct, btnSupplier, btnCategorie, btnLogout;
     private final User userLogged; // Đối tượng người dùng từ DB
-
+    private JButton currentSelectedButton = null; // Lưu nút đang được chọn
     public WarehouseMainFrame(User u) {
         this.userLogged = u;
         initComponents();
@@ -45,12 +46,12 @@ public class WarehouseMainFrame extends JFrame implements ActionListener {
         sidebarPanel.add(lblMenu);
 
         // Hàng 2-5: Menu chính
-        btnHome = createMenuButton("Trang Chủ");
+        btnListImport = createMenuButton("Danh Sách Nhập Kho");
         btnProduct = createMenuButton("Quản Lý Sản Phẩm");
         btnSupplier = createMenuButton("Quản Lý Nhà Cung Cấp");
-        btnCategorie = createMenuButton("Phân Loại Sản Phẩm");
+        btnCategorie = createMenuButton("Danh Mục Sản Phẩm");
 
-        sidebarPanel.add(btnHome);
+        sidebarPanel.add(btnListImport);
         sidebarPanel.add(btnProduct);
         sidebarPanel.add(btnSupplier);
         sidebarPanel.add(btnCategorie);
@@ -89,7 +90,7 @@ public class WarehouseMainFrame extends JFrame implements ActionListener {
         // --- 2. CONTENT PANEL ---
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
-        contentPanel.add(createDummyPanel("Trang Chủ", Color.WHITE), "HOME");
+        contentPanel.add(new ListImport(), "ListImport");
         contentPanel.add(new ProductPanel(), "PRODUCT");        
         contentPanel.add(new SupplierPanel(), "SUPPLIER");
         contentPanel.add(new CategoryPanel(), "CATEGORIE");
@@ -148,15 +149,20 @@ public class WarehouseMainFrame extends JFrame implements ActionListener {
         btn.setBorderPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.addMouseListener(new MouseAdapter() {
-            @Override
+         @Override
             public void mouseEntered(MouseEvent e) {
+                // Luôn đổi màu khi di chuột vào
                 btn.setBackground(Style.COLOR_BG_LEFT);
                 btn.setBorder(BorderFactory.createMatteBorder(0, 5, 0, 0, Color.WHITE));
             }
+
             @Override
             public void mouseExited(MouseEvent e) {
-                btn.setBackground(Style.COLOR_PRIMARY);
-                btn.setBorder(new EmptyBorder(10, 20, 10, 10));
+                // CHỈ reset màu nếu nút này KHÔNG PHẢI là nút đang được chọn
+                if (btn != currentSelectedButton) {
+                    btn.setBackground(Style.COLOR_PRIMARY);
+                    btn.setBorder(new EmptyBorder(10, 20, 10, 10));
+                }
             }
         });
         btn.addActionListener(this);
@@ -171,12 +177,26 @@ public class WarehouseMainFrame extends JFrame implements ActionListener {
         p.add(l);
         return p;
     }
-
+    
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == btnHome) cardLayout.show(contentPanel, "HOME");
-        else if (e.getSource() == btnProduct) cardLayout.show(contentPanel, "PRODUCT");
-        else if (e.getSource() == btnSupplier) cardLayout.show(contentPanel, "SUPPLIER");
-        else if (e.getSource() == btnCategorie) cardLayout.show(contentPanel, "CATEGORIE");
+        JButton clickedButton = (JButton) e.getSource();
+
+        // 1. Reset màu cho nút cũ (nếu có)
+        if (currentSelectedButton != null) {
+            currentSelectedButton.setBackground(Style.COLOR_PRIMARY);
+            currentSelectedButton.setBorder(new EmptyBorder(10, 20, 10, 10));
+        }
+
+        // 2. Thiết lập màu sẫm cho nút mới được chọn
+        clickedButton.setBackground(Style.COLOR_BG_LEFT); // Màu sẫm khi active
+        clickedButton.setBorder(BorderFactory.createMatteBorder(0, 5, 0, 0, Color.WHITE));
+        currentSelectedButton = clickedButton;
+
+        // 3. Chuyển đổi CardLayout
+        if (clickedButton == btnListImport) cardLayout.show(contentPanel, "ListImport");
+        else if (clickedButton == btnProduct) cardLayout.show(contentPanel, "PRODUCT");
+        else if (clickedButton == btnSupplier) cardLayout.show(contentPanel, "SUPPLIER");
+        else if (clickedButton == btnCategorie) cardLayout.show(contentPanel, "CATEGORIE");
     }
 }
