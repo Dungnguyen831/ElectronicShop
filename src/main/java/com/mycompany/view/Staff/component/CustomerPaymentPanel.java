@@ -1,4 +1,4 @@
-package com.mycompany.view.component;
+package com.mycompany.view.Staff.component;
 
 import java.awt.*;
 import javax.swing.*;

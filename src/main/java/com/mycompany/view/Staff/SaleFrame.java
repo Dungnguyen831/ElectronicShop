@@ -1,8 +1,11 @@
 package com.mycompany.view.Staff;
 
+import com.mycompany.view.Staff.component.CartPanel;
+import com.mycompany.view.Staff.component.HeaderPanel;
+import com.mycompany.view.Staff.component.ProductListPanel;
+import com.mycompany.view.Staff.component.CustomerPaymentPanel;
 import com.mycompany.dao.*;
 import com.mycompany.model.*;
-import com.mycompany.view.component.*; 
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,6 +27,7 @@ public class SaleFrame extends JFrame {
     private CardLayout cardLayoutRight;
     private JPanel pnlRightContainer;
 
+    private Customer selectedCustomer = null;
     private double subTotalAmount = 0;
     private double discountAmount = 0;
     private double pointsDiscount = 0;
@@ -48,7 +52,22 @@ public class SaleFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        pnlHeader = new HeaderPanel(currentUser, () -> dispose());
+                // Trong lớp SaleFrame.java
+        pnlHeader = new HeaderPanel(currentUser, () -> {
+            // Đây là hành động "onLogout" sẽ được thực hiện khi bấm nút
+            int confirm = JOptionPane.showConfirmDialog(this, 
+                    "Bạn có chắc chắn muốn đăng xuất?", 
+                    "Xác nhận", JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                this.dispose(); // Bước 1: Đóng cửa sổ SaleFrame hiện tại
+
+                // Bước 2: Khởi tạo và hiển thị lại LoginFrame
+                java.awt.EventQueue.invokeLater(() -> {
+                    new com.mycompany.view.LoginFrame().setVisible(true); 
+                });
+            }
+        });
         add(pnlHeader, BorderLayout.NORTH);
 
         JPanel pnlMain = new JPanel(new GridLayout(1, 2, 10, 0));
@@ -204,42 +223,76 @@ public class SaleFrame extends JFrame {
     private boolean isValidEmail(String s) { return s == null || s.trim().isEmpty() || Pattern.matches("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$", s); }
 
     private void findCustomer() {
-        String ph = pnlPayment.txtPhone.getText().trim();
-        if(ph.isEmpty()) { JOptionPane.showMessageDialog(this, "Nhập SĐT!"); return; }
-        if(!isValidPhone(ph)) { JOptionPane.showMessageDialog(this, "SĐT sai!"); return; }
+    String ph = pnlPayment.txtPhone.getText().trim();
+    if(ph.isEmpty()) { JOptionPane.showMessageDialog(this, "Nhập SĐT!"); return; }
+    if(!isValidPhone(ph)) { JOptionPane.showMessageDialog(this, "SĐT sai!"); return; }
+    
+    Customer c = customerDAO.findByPhone(ph);
+    if(c != null) {
+        this.selectedCustomer = c;
+        pnlPayment.txtName.setText(c.getFullName());
+        pnlPayment.txtEmail.setText(c.getEmail());
+        pnlPayment.txtAddress.setText(c.getAddress());
+        currentCustomerPoints = c.getPoints();
+        pnlPayment.lblPointInfo.setText("Có: " + currentCustomerPoints + " điểm");
+        pnlPayment.chkUsePoints.setEnabled(currentCustomerPoints > 0);
+        JOptionPane.showMessageDialog(this, "Khách hàng cũ: " + c.getFullName());
+    } else {
+        // --- SỬA TẠI ĐÂY: Tạo đối tượng khách hàng tạm cho khách mới ---
+        this.selectedCustomer = new Customer();
+        this.selectedCustomer.setCustomerId(-1); // Đánh dấu là khách chưa có trong DB
+        this.selectedCustomer.setPhone(ph);
+        this.selectedCustomer.setPoints(0);
         
-        Customer c = customerDAO.findByPhone(ph);
-        if(c != null) {
-            pnlPayment.txtName.setText(c.getFullName());
-            pnlPayment.txtEmail.setText(c.getEmail());
-            pnlPayment.txtAddress.setText(c.getAddress());
-            currentCustomerPoints = c.getPoints();
-            pnlPayment.lblPointInfo.setText("Có: " + currentCustomerPoints + " điểm");
-            pnlPayment.chkUsePoints.setEnabled(currentCustomerPoints > 0);
-            JOptionPane.showMessageDialog(this, "Khách hàng: " + c.getFullName());
-        } else {
-            currentCustomerPoints = 0; pnlPayment.chkUsePoints.setEnabled(false);
-            pnlPayment.lblPointInfo.setText("");
-            JOptionPane.showMessageDialog(this, "Khách mới.");
-        }
+        currentCustomerPoints = 0; 
+        pnlPayment.chkUsePoints.setEnabled(false);
+        pnlPayment.lblPointInfo.setText("");
+        JOptionPane.showMessageDialog(this, "Khách hàng mới. Bạn có thể nhập tên và áp dụng mã.");
     }
+}
 
     private void applyVoucher() {
-        String code = pnlPayment.txtVoucherCode.getText().trim();
-        if(code.isEmpty()) return;
-        Voucher v = voucherDAO.findByCode(code);
-        if(v != null) {
-            discountAmount = (subTotalAmount * v.getDiscountPercent()) / 100.0;
-            if(v.getMaxDiscount() > 0 && discountAmount > v.getMaxDiscount()) discountAmount = v.getMaxDiscount();
-            appliedVoucherId = v.getVoucherId();
-            pnlCart.setVoucherName(code + " (-" + v.getDiscountPercent() + "%)");
-            JOptionPane.showMessageDialog(this, "Áp dụng thành công!");
-        } else {
-            discountAmount = 0; appliedVoucherId = null; pnlCart.setVoucherName("Mã lỗi");
-            JOptionPane.showMessageDialog(this, "Mã lỗi!");
-        }
-        calculateTotals();
+    String code = pnlPayment.txtVoucherCode.getText().trim();
+    if(code.isEmpty()) return;
+
+    if (selectedCustomer == null) {
+        JOptionPane.showMessageDialog(this, "Vui lòng nhập SĐT và bấm 'Tìm' để xác định khách hàng trước!");
+        return;
     }
+
+    Voucher v = voucherDAO.findByCode(code);
+    if(v != null) {
+        // Nếu là khách cũ (ID > 0), mới kiểm tra trong DB xem đã dùng mã chưa
+        if (selectedCustomer.getCustomerId() > 0) {
+            if (voucherDAO.checkVoucherUsed(selectedCustomer.getCustomerId(), v.getVoucherId())) {
+                JOptionPane.showMessageDialog(this, "Khách hàng này đã sử dụng mã " + code + " trước đó!");
+                resetVoucherState();
+                return;
+            }
+        }
+        // Nếu ID là -1 (khách mới), bỏ qua kiểm tra checkVoucherUsed vì họ chắc chắn chưa dùng
+
+        discountAmount = (subTotalAmount * v.getDiscountPercent()) / 100.0;
+        if(v.getMaxDiscount() > 0 && discountAmount > v.getMaxDiscount()) {
+            discountAmount = v.getMaxDiscount();
+        }
+        
+        appliedVoucherId = v.getVoucherId();
+        pnlCart.setVoucherName(code + " (-" + v.getDiscountPercent() + "%)");
+        JOptionPane.showMessageDialog(this, "Áp dụng mã giảm giá thành công!");
+    } else {
+        resetVoucherState();
+        JOptionPane.showMessageDialog(this, "Mã giảm giá không hợp lệ hoặc đã hết hạn!");
+    }
+    calculateTotals();
+}
+
+// Hàm bổ trợ để xóa trạng thái voucher khi lỗi
+private void resetVoucherState() {
+    discountAmount = 0;
+    appliedVoucherId = null;
+    pnlCart.setVoucherName("Mã lỗi/Không áp dụng");
+}
 
     private void processOrder() {
         String ph = pnlPayment.txtPhone.getText().trim();
@@ -262,9 +315,12 @@ public class SaleFrame extends JFrame {
 
         boolean ok = orderDAO.createOrder(currentUser.getUserId(), c.getCustomerId(), appliedVoucherId, finalTotal, cartItems, ptsUsed);
         if(ok) {
+            pnlProductList.loadData(null, 0);
             JOptionPane.showMessageDialog(this, "THANH TOÁN THÀNH CÔNG!");
             resetAll();
+            
         } else JOptionPane.showMessageDialog(this, "Lỗi!");
+        
     }
 
     private void resetAll() {
