@@ -8,7 +8,7 @@ import com.mycompany.view.admin.AdminMainFrame;
 import com.mycompany.dao.UserDAO;
 import com.mycompany.model.User;
 import com.mycompany.util.Style;
-import com.mycompany.view.Staff.SaleFrame;
+import com.mycompany.view.staff.SaleFrame;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
