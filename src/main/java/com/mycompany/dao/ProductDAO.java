@@ -118,6 +118,7 @@ public class ProductDAO {
                  "WHERE p.category_id = ?";
     return selectBySql(sql, categoryId);
     }
+    
     public List<Product> searchProducts(String keyword, int categoryId) {
         List<Product> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT * FROM products WHERE status = 1");

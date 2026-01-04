@@ -11,7 +11,7 @@ import javax.swing.*;
 public class ProductCard extends JPanel {
     
     // Đường dẫn ảnh (Bạn tự sửa lại cho đúng máy bạn)
-    private final String IMAGE_DIR = "D:\\Documents\\NetBeansProjects\\ElectronicShop\\src\\main\\java\\com\\mycompany\\util\\upload\\";
+    private final String IMAGE_DIR = "D:\\NetBeans-23\\ElectronicShop\\src\\main\\java\\com\\mycompany\\util\\upload\\";
 
     public ProductCard(Product p, Consumer<Product> onSelect) {
         setLayout(new BorderLayout(5, 5));

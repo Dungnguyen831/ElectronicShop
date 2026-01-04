@@ -1,5 +1,7 @@
 package com.mycompany.dao;
 
+import com.mycompany.model.Order;
+import java.util.ArrayList;
 import com.mycompany.database.DatabaseConnection;
 import com.mycompany.model.OrderDetail;
 import java.sql.*;
@@ -89,5 +91,113 @@ public class OrderDAO {
         } finally {
             try { if (conn != null) { conn.setAutoCommit(true); conn.close(); } } catch (Exception e) {}
         }
+    }
+    // 1. Lấy danh sách đơn hàng
+    public List<Order> getAllOrders() {
+        List<Order> list = new ArrayList<>();
+        String sql = """
+            SELECT o.order_id, u.full_name AS staff_name,
+                   c.full_name AS customer_name,
+                   o.total_amount, o.payment_method,
+                   o.status, o.order_date
+            FROM orders o
+            LEFT JOIN users u ON o.user_id = u.user_id
+            LEFT JOIN customers c ON o.customer_id = c.customer_id
+            ORDER BY o.order_date DESC
+        """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Order o = new Order();
+                o.setOrderId(rs.getInt("order_id"));
+                o.setStaffName(rs.getString("staff_name"));
+                o.setCustomerName(rs.getString("customer_name"));
+                o.setTotalAmount(rs.getDouble("total_amount"));
+                o.setPaymentMethod(rs.getString("payment_method"));
+                o.setStatus(rs.getInt("status"));
+                o.setOrderDate(rs.getTimestamp("order_date"));
+                list.add(o);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // 2. Tìm kiếm đơn hàng
+    public List<Order> searchOrders(String keyword) {
+        List<Order> list = new ArrayList<>();
+        String sql = """
+            SELECT o.order_id, u.full_name AS staff_name,
+                   c.full_name AS customer_name,
+                   o.total_amount, o.payment_method,
+                   o.status, o.order_date
+            FROM orders o
+            LEFT JOIN users u ON o.user_id = u.user_id
+            LEFT JOIN customers c ON o.customer_id = c.customer_id
+            WHERE o.order_id LIKE ?
+               OR u.full_name LIKE ?
+               OR c.full_name LIKE ?
+        """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            String key = "%" + keyword + "%";
+            ps.setString(1, key);
+            ps.setString(2, key);
+            ps.setString(3, key);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Order o = new Order();
+                o.setOrderId(rs.getInt("order_id"));
+                o.setStaffName(rs.getString("staff_name"));
+                o.setCustomerName(rs.getString("customer_name"));
+                o.setTotalAmount(rs.getDouble("total_amount"));
+                o.setPaymentMethod(rs.getString("payment_method"));
+                o.setStatus(rs.getInt("status"));
+                o.setOrderDate(rs.getTimestamp("order_date"));
+                list.add(o);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // 3. Cập nhật đơn hàng
+    public boolean updateOrder(int orderId, String paymentMethod, int status) {
+        String sql = "UPDATE orders SET payment_method=?, status=? WHERE order_id=?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, paymentMethod);
+            ps.setInt(2, status);
+            ps.setInt(3, orderId);
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // 4. Hủy đơn hàng
+    public boolean cancelOrder(int orderId) {
+        String sql = "UPDATE orders SET status = 0 WHERE order_id=?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, orderId);
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

@@ -22,7 +22,7 @@ public class AdminMainFrame extends JFrame implements ActionListener {
     private User currentUser;
 
     // Các nút menu
-    private JButton btnHome, btnRevenue, btnVoucher, btnUser, btnCustomer, btnLogout;
+    private JButton btnHome, btnRevenue, btnVoucher, btnUser, btnCustomer, btnOrder, btnLogout;
 
     public AdminMainFrame(User user) {
         this.currentUser = user; 
@@ -40,7 +40,7 @@ public class AdminMainFrame extends JFrame implements ActionListener {
         sidebarPanel = new JPanel();
         sidebarPanel.setPreferredSize(new Dimension(250, 0));
         sidebarPanel.setBackground(Style.COLOR_PRIMARY);
-        sidebarPanel.setLayout(new java.awt.GridLayout(10, 1, 0, 10)); 
+        sidebarPanel.setLayout(new java.awt.GridLayout(0, 1, 0, 10)); 
         sidebarPanel.setBorder(new EmptyBorder(20, 10, 20, 10));
 
         // Hàng 1: Tiêu đề menu
@@ -55,12 +55,14 @@ public class AdminMainFrame extends JFrame implements ActionListener {
         btnVoucher = createMenuButton("Quản Lý Voucher");
         btnUser = createMenuButton("Quản Lý Nhân Viên");
         btnCustomer = createMenuButton("Quản Lý Khách Hàng");
+        btnOrder = createMenuButton("Quản Lý Đơn Hàng");
 
         sidebarPanel.add(btnHome);
         sidebarPanel.add(btnRevenue);
         sidebarPanel.add(btnVoucher);
         sidebarPanel.add(btnUser);
         sidebarPanel.add(btnCustomer);
+        sidebarPanel.add(btnOrder);
 
         // Hàng 7: Filler (Ô trống)
         sidebarPanel.add(new JLabel("")); 
@@ -98,9 +100,12 @@ public class AdminMainFrame extends JFrame implements ActionListener {
 
         contentPanel.add(new HomePanel(), "HOME");
         contentPanel.add(createDummyPanel("Màn hình báo cáo doanh thu", Color.LIGHT_GRAY), "REVENUE");
-        contentPanel.add(new com.mycompany.view.admin.VoucherPanel(), "VOUCHER");
+        contentPanel.add(new VoucherPanel(), "VOUCHER");
         contentPanel.add(new UserPanel(), "USER");
         contentPanel.add(new CustomerPanel(), "CUSTOMER");
+        contentPanel.add(new OrderPanel(), "ORDER");
+        
+        // Ví dụ sau này: contentPanel.add(new ProductPanel(), "PRODUCT");
 
         this.add(contentPanel, BorderLayout.CENTER);
     }
@@ -184,10 +189,20 @@ public class AdminMainFrame extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == btnHome) cardLayout.show(contentPanel, "HOME");
-        else if (e.getSource() == btnRevenue) cardLayout.show(contentPanel, "REVENUE");
-        else if (e.getSource() == btnVoucher) cardLayout.show(contentPanel, "VOUCHER");
-        else if (e.getSource() == btnUser) cardLayout.show(contentPanel, "USER");
-        else if (e.getSource() == btnCustomer) cardLayout.show(contentPanel, "CUSTOMER");
+        // Logic chuyển màn hình
+        if (e.getSource() == btnHome) {
+            cardLayout.show(contentPanel, "HOME");
+        } else if (e.getSource() == btnRevenue) {
+            cardLayout.show(contentPanel, "REVENUE");
+        } else if (e.getSource() == btnUser) {
+            cardLayout.show(contentPanel, "USER");
+        } else if (e.getSource() == btnCustomer) {
+            cardLayout.show(contentPanel, "CUSTOMER");
+        } else if (e.getSource() == btnVoucher) {
+            cardLayout.show(contentPanel, "VOUCHER");
+        } else if (e.getSource() == btnOrder) {
+            cardLayout.show(contentPanel, "ORDER");
+        }
+        
     }
 }

@@ -48,7 +48,22 @@ public class SaleFrame extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        pnlHeader = new HeaderPanel(currentUser, () -> dispose());
+        pnlHeader = new HeaderPanel(currentUser, () -> {
+            // Đây là hành động "onLogout" sẽ được thực hiện khi bấm nút
+            int confirm = JOptionPane.showConfirmDialog(this, 
+                    "Bạn có chắc chắn muốn đăng xuất?", 
+                    "Xác nhận", JOptionPane.YES_NO_OPTION);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                this.dispose(); // Bước 1: Đóng cửa sổ SaleFrame hiện tại
+
+                // Bước 2: Khởi tạo và hiển thị lại LoginFrame
+                java.awt.EventQueue.invokeLater(() -> {
+                    new com.mycompany.view.LoginFrame().setVisible(true); 
+                });
+            }
+        });
+        
         add(pnlHeader, BorderLayout.NORTH);
 
         JPanel pnlMain = new JPanel(new GridLayout(1, 2, 10, 0));

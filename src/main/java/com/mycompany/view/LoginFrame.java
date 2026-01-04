@@ -155,10 +155,9 @@ public class LoginFrame extends JFrame {
         User u = dao.checkLogin(user, pass);
 
         if (u != null) {
-           JOptionPane.showMessageDialog(this, "Đăng nhập thành công!");
+            JOptionPane.showMessageDialog(this, "Đăng nhập thành công!");
     
-    // Đóng form đăng nhập
-    this.dispose();
+            this.dispose();
 
     // Kiểm tra quyền để mở cửa sổ tương ứng
     switch (u.getRoleId()) {
@@ -167,12 +166,12 @@ public class LoginFrame extends JFrame {
             new com.mycompany.view.admin.AdminMainFrame(u).setVisible(true);
             break;
 
-       case 2: // STAFF (Nhân viên bán hàng)
-            // Mở giao diện Bán hàng (Full màn hình cho chuyên nghiệp)
-            SaleFrame salesFrame = new SaleFrame(u);
-            salesFrame.setExtendedState(JFrame.MAXIMIZED_BOTH); 
-            salesFrame.setVisible(true);
-            break;
+                case 2: // STAFF (Nhân viên bán hàng)
+                    // Mở giao diện Bán hàng (Full màn hình cho chuyên nghiệp)
+                   SaleFrame salesFrame = new SaleFrame(u);
+                    salesFrame.setExtendedState(JFrame.MAXIMIZED_BOTH); 
+                    salesFrame.setVisible(true);
+                    break;
 
         case 3: // WAREHOUSE (Thủ kho)
       //       Mở giao diện Kho
