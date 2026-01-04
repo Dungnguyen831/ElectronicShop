@@ -8,7 +8,7 @@ import com.mycompany.view.admin.AdminMainFrame;
 import com.mycompany.dao.UserDAO;
 import com.mycompany.model.User;
 import com.mycompany.util.Style;
-//import com.mycompany.view.staff.SaleFrame;
+import com.mycompany.view.Staff.SaleFrame;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -166,12 +166,13 @@ public class LoginFrame extends JFrame {
             new com.mycompany.view.admin.AdminMainFrame(u).setVisible(true);
             break;
 
-//                case 2: // STAFF (Nhân viên bán hàng)
-//                    // Mở giao diện Bán hàng (Full màn hình cho chuyên nghiệp)
-//                   SaleFrame salesFrame = new SaleFrame(u);
-//                    salesFrame.setExtendedState(JFrame.MAXIMIZED_BOTH); 
-//                    salesFrame.setVisible(true);
-//                    break;
+
+       case 2: // STAFF (Nhân viên bán hàng)
+            // Mở giao diện Bán hàng (Full màn hình cho chuyên nghiệp)
+                com.mycompany.view.Staff.SaleFrame salesFrame = new com.mycompany.view.Staff.SaleFrame(u);
+            salesFrame.setExtendedState(JFrame.MAXIMIZED_BOTH); 
+            salesFrame.setVisible(true);
+            break;
 
         case 3: // WAREHOUSE (Thủ kho)
       //       Mở giao diện Kho

@@ -1,62 +1,87 @@
 package com.mycompany.dao;
 
 import com.mycompany.database.DatabaseConnection;
-import com.mycompany.model.Import;
-import com.mycompany.model.ImportDetail;
+
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ImportDAO {
 
-    public boolean saveImportOrder(Import imp, List<ImportDetail> details) {
-        Connection conn = null;
-        try {
-            conn = DatabaseConnection.getConnection();
-            conn.setAutoCommit(false); // Bắt đầu giao dịch (Transaction)
+    /**
+     * Lấy tất cả dữ liệu đã JOIN từ 4 bảng
+     */
+    public List<Object[]> selectAllJoined() {
+        List<Object[]> list = new ArrayList<>();
+        // Sử dụng đúng tên cột import_date và total như trong Database
+        String sql = "SELECT i.import_id, i.import_date, s.supplier_name, p.product_name, "
+                   + "d.quantity, d.input_price, d.total "
+                   + "FROM imports i "
+                   + "JOIN suppliers s ON i.supplier_id = s.supplier_id "
+                   + "JOIN import_details d ON i.import_id = d.import_id "
+                   + "JOIN products p ON d.product_id = p.product_id "
+                   + "ORDER BY i.import_date DESC";
 
-            // 1. Lưu thông tin chung vào bảng imports
-            String sqlImp = "INSERT INTO imports (supplier_id, user_id, total_amount) VALUES (?, ?, ?)";
-            PreparedStatement psImp = conn.prepareStatement(sqlImp, Statement.RETURN_GENERATED_KEYS);
-            psImp.setInt(1, imp.getSupplierId());
-            psImp.setInt(2, imp.getUserId());
-            psImp.setDouble(3, imp.getTotalAmount());
-            psImp.executeUpdate();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
-            ResultSet rs = psImp.getGeneratedKeys();
-            int importId = 0;
-            if (rs.next()) importId = rs.getInt(1);
-
-            // 2. Lưu chi tiết và CẬP NHẬT TỒN KHO bảng products
-            String sqlDet = "INSERT INTO import_details (import_id, product_id, quantity, input_price) VALUES (?, ?, ?, ?)";
-            // Cập nhật cột 'quantity' trong bảng products dựa trên ID
-            String sqlUpdateStock = "UPDATE products SET quantity = quantity + ?, import_price=? WHERE product_id = ?";
-
-            PreparedStatement psDet = conn.prepareStatement(sqlDet);
-            PreparedStatement psUpdate = conn.prepareStatement(sqlUpdateStock);
-
-            for (ImportDetail d : details) {
-                // Thêm chi tiết phiếu
-                psDet.setInt(1, importId);
-                psDet.setInt(2, d.getProductId());
-                psDet.setInt(3, d.getQuantity());
-                psDet.setDouble(4, d.getInputPrice());
-                psDet.executeUpdate();
-
-                // Cập nhật số lượng tồn kho cho sản phẩm
-                psUpdate.setInt(1, d.getQuantity());
-                psUpdate.setDouble(2, d.getInputPrice());
-                psUpdate.setInt(3, d.getProductId());
-                psUpdate.executeUpdate();
+            while (rs.next()) {
+                Object[] row = {
+                    rs.getInt("import_id"),
+                    rs.getTimestamp("import_date"), // Sửa đúng tên cột
+                    rs.getString("supplier_name"),
+                    rs.getString("product_name"),
+                    rs.getInt("quantity"),
+                    rs.getDouble("input_price"),
+                    rs.getDouble("total")
+                };
+                list.add(row);
             }
-
-            conn.commit(); // Hoàn tất giao dịch
-            return true;
-        } catch (Exception e) {
-            try { if (conn != null) conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+        } catch (SQLException e) {
             e.printStackTrace();
-            return false;
-        } finally {
-            try { if (conn != null) conn.setAutoCommit(true); } catch (SQLException e) { e.printStackTrace(); }
         }
+        return list;
+    }
+
+    /**
+     * Lọc dữ liệu theo khoảng thời gian
+     */
+    public List<Object[]> selectByDateRange(java.util.Date start, java.util.Date end) {
+        List<Object[]> list = new ArrayList<>();
+        // Sửa: Thay created_at bằng import_date
+        String sql = "SELECT i.import_id, i.import_date, s.supplier_name, p.product_name, "
+                   + "d.quantity, d.input_price, d.total "
+                   + "FROM imports i "
+                   + "JOIN suppliers s ON i.supplier_id = s.supplier_id "
+                   + "JOIN import_details d ON i.import_id = d.import_id "
+                   + "JOIN products p ON d.product_id = p.product_id "
+                   + "WHERE i.import_date BETWEEN ? AND ? "
+                   + "ORDER BY i.import_date DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            // Chuyển đổi java.util.Date sang java.sql.Timestamp
+            ps.setTimestamp(1, new Timestamp(start.getTime()));
+            ps.setTimestamp(2, new Timestamp(end.getTime()));
+            
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Object[] row = {
+                    rs.getInt("import_id"),
+                    rs.getTimestamp("import_date"), // Sửa đúng tên cột
+                    rs.getString("supplier_name"),
+                    rs.getString("product_name"),
+                    rs.getInt("quantity"),
+                    rs.getDouble("input_price"),
+                    rs.getDouble("total")
+                };
+                list.add(row);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 }

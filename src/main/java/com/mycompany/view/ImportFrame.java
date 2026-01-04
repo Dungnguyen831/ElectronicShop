@@ -201,21 +201,21 @@ public class ImportFrame extends JFrame {
             imp.setTotalAmount(listDetails.stream().mapToDouble(d -> d.getQuantity() * d.getInputPrice()).sum());
 
             // 3. Gọi DAO lưu vào Database
-            if (importDao.saveImportOrder(imp, listDetails)) {
-                JOptionPane.showMessageDialog(this, "Nhập kho thành công! Số lượng tồn đã được cập nhật.");
-
-        // --- QUAN TRỌNG: CẬP NHẬT LẠI BẢNG Ở PRODUCTPANEL ---
-        if (productPanel != null) {
-            // Gọi hàm đổ lại dữ liệu từ Database lên bảng ở màn hình chính
-            productPanel.fillTable(); 
-        }
-        
-        // Xóa sạch bảng tạm và đóng Frame hoặc reset
-        resetAll();
-        // this.dispose(); // Bỏ comment nếu muốn đóng cửa sổ sau khi nhập xong
-    } else {
-        JOptionPane.showMessageDialog(this, "Lỗi: Không thể lưu phiếu nhập vào cơ sở dữ liệu!");
-    }
+//            if (importDao.saveImportOrder(imp, listDetails)) {
+//                JOptionPane.showMessageDialog(this, "Nhập kho thành công! Số lượng tồn đã được cập nhật.");
+//
+//        // --- QUAN TRỌNG: CẬP NHẬT LẠI BẢNG Ở PRODUCTPANEL ---
+//        if (productPanel != null) {
+//            // Gọi hàm đổ lại dữ liệu từ Database lên bảng ở màn hình chính
+//            productPanel.fillTable(); 
+//        }
+//        
+//        // Xóa sạch bảng tạm và đóng Frame hoặc reset
+//        resetAll();
+//        // this.dispose(); // Bỏ comment nếu muốn đóng cửa sổ sau khi nhập xong
+//    } else {
+//        JOptionPane.showMessageDialog(this, "Lỗi: Không thể lưu phiếu nhập vào cơ sở dữ liệu!");
+//    }
 });
     }
 

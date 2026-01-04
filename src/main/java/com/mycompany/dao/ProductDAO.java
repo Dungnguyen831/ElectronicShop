@@ -5,6 +5,7 @@ import com.mycompany.database.DatabaseConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.JOptionPane;
 
 public class ProductDAO {
 
@@ -19,7 +20,7 @@ public class ProductDAO {
             return false;
         }
     }
-
+    
     public boolean update(Product p) {
         String sql = "UPDATE products SET category_id=?, supplier_id=?, product_name=?, barcode=?, import_price=?, sale_price=?, quantity=?, image=?, status=? WHERE product_id=?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -34,16 +35,52 @@ public class ProductDAO {
     }
 
     public void delete(int id) {
-        String sql = "DELETE FROM products WHERE product_id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, id);
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+      // 1. Kiểm tra sản phẩm có tồn tại trong các bảng chi tiết hay không
+      if (isProductInUse(id)) {
+          JOptionPane.showMessageDialog(null, 
+              "Không thể xóa sản phẩm này vì đã có lịch sử nhập hàng hoặc bán hàng!", 
+              "Lỗi ràng buộc dữ liệu", 
+              JOptionPane.ERROR_MESSAGE);
+          return;
+      }
 
+      // 2. Nếu không tồn tại, tiến hành xóa
+      String sql = "DELETE FROM products WHERE product_id = ?";
+      try (Connection conn = DatabaseConnection.getConnection();
+           PreparedStatement pstmt = conn.prepareStatement(sql)) {
+          pstmt.setInt(1, id);
+          int rows = pstmt.executeUpdate();
+          if (rows > 0) {
+              JOptionPane.showMessageDialog(null, "Xóa sản phẩm thành công!");
+          }
+      } catch (SQLException e) {
+          e.printStackTrace();
+          JOptionPane.showMessageDialog(null, "Lỗi hệ thống khi xóa sản phẩm!");
+      }
+  }
+
+  /**
+   * Hàm kiểm tra product_id có tồn tại trong import_details hoặc order_details không
+   */
+  private boolean isProductInUse(int productId) {
+      // Truy vấn kiểm tra đồng thời ở cả 2 bảng bằng UNION
+      String sql = "SELECT product_id FROM import_details WHERE product_id = ? " +
+                   "UNION " +
+                   "SELECT product_id FROM order_details WHERE product_id = ?";
+
+      try (Connection conn = DatabaseConnection.getConnection();
+           PreparedStatement pstmt = conn.prepareStatement(sql)) {
+          pstmt.setInt(1, productId);
+          pstmt.setInt(2, productId);
+
+          try (ResultSet rs = pstmt.executeQuery()) {
+              return rs.next(); // Nếu rs.next() là true tức là có tồn tại ít nhất 1 dòng
+          }
+      } catch (SQLException e) {
+          e.printStackTrace();
+      }
+      return false;
+  }
     public List<Product> selectAll() {
         String sql = "SELECT p.*, c.category_name, s.supplier_name " +
                      "FROM products p " +
@@ -61,7 +98,26 @@ public class ProductDAO {
                      "WHERE p.product_name LIKE ? OR p.barcode LIKE ?";
         return selectBySql(sql, "%" + keyword + "%", "%" + keyword + "%");
     }
+    //cập nhật trạng thái 
+    public boolean updateStatus(int productId, int status) {
+        String sql = "UPDATE products SET status = ? WHERE product_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
+            pstmt.setInt(1, status);
+            pstmt.setInt(2, productId);
+
+            int rowsAffected = pstmt.executeUpdate();
+
+            // In ra console để debug xem lệnh có thực sự chạy không
+            System.out.println("Sản phẩm ID " + productId + " đã cập nhật status: " + status + ". Số dòng bị ảnh hưởng: " + rowsAffected);
+
+            return rowsAffected > 0; // Trả về true nếu cập nhật thành công
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
     private void setProductParams(PreparedStatement pstmt, Product p) throws SQLException {
         pstmt.setInt(1, p.getCategoryId());
         pstmt.setInt(2, p.getSupplierId());
@@ -69,9 +125,14 @@ public class ProductDAO {
         pstmt.setString(4, p.getBarcode());
         pstmt.setDouble(5, p.getImportPrice());
         pstmt.setDouble(6, p.getSalePrice());
+
+        // Đẩy số lượng vào tham số thứ 7
         pstmt.setInt(7, p.getQuantity());
         pstmt.setString(8, p.getImage());
-        pstmt.setInt(9, p.getStatus()); // Kiểu int: 0-Ngừng, 1-Đang bán
+
+        // RÀNG BUỘC: Nếu số lượng <= 0, ép status về 0 (Ngừng bán)
+        int finalStatus = (p.getQuantity() <= 0) ? 0 : p.getStatus();
+        pstmt.setInt(9, finalStatus); 
     }
 
     private List<Product> selectBySql(String sql, Object... args) {
