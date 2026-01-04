@@ -1,4 +1,4 @@
-package com.mycompany.view.component;
+package com.mycompany.view.Staff.component;
 
 import com.mycompany.model.User;
 import com.mycompany.util.Style; // Nếu có
