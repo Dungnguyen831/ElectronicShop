@@ -9,7 +9,6 @@ import java.util.List;
 
 public class ImportDAO {
 
-    
     public boolean saveImportOrder(Import imp, List<ImportDetail> details) {
         Connection conn = null;
         try {
@@ -132,7 +131,7 @@ try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
           ps.setTimestamp(2, new java.sql.Timestamp(end.getTime()));
 
           ResultSet rs = ps.executeQuery();
-          while (rs.next()) {
+while (rs.next()) {
               list.add(new Object[]{
                   rs.getInt("import_id"),
                   rs.getTimestamp("import_date"),

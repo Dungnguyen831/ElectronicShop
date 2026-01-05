@@ -84,9 +84,8 @@ public class ListImport extends JPanel {
         btnRefresh.setBackground(new Color(108, 117, 125));
         btnRefresh.setForeground(Color.WHITE);
         topPanel.add(btnRefresh);
-
-        // --- 2. BẢNG DỮ LIỆU ---
-        String[] columns = {"ID Phiếu", "Thời Gian", "Nhà Cung Cấp", "Tổng Tiền"};
+// --- 2. BẢNG DỮ LIỆU ---
+        String[] columns = {"ID Phiếu", "Thời Gian", "Nhà Cung Cấp","Tổng Tiền"};
         modelImports = new DefaultTableModel(columns, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -158,8 +157,7 @@ public class ListImport extends JPanel {
         
         JButton btnBack = new JButton("<< Quay lại");
         btnBack.addActionListener(e -> cardLayout.show(containerPanel, "LIST"));
-
-        headerPanel.add(lblDetailHeader, BorderLayout.CENTER);
+headerPanel.add(lblDetailHeader, BorderLayout.CENTER);
         headerPanel.add(btnBack, BorderLayout.WEST);
 
         modelDetails = new DefaultTableModel(new String[]{"Sản Phẩm", "Số Lượng", "Giá Nhập", "Thành Tiền"}, 0);

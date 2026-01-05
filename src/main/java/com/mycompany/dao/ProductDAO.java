@@ -118,8 +118,6 @@ public class ProductDAO {
             return false;
         }
     }
- 
-        
     private void setProductParams(PreparedStatement pstmt, Product p) throws SQLException {
         pstmt.setInt(1, p.getCategoryId());
         pstmt.setInt(2, p.getSupplierId());
@@ -127,19 +125,15 @@ public class ProductDAO {
         pstmt.setString(4, p.getBarcode());
         pstmt.setDouble(5, p.getImportPrice());
         pstmt.setDouble(6, p.getSalePrice());
+
+        // Đẩy số lượng vào tham số thứ 7
         pstmt.setInt(7, p.getQuantity());
         pstmt.setString(8, p.getImage());
-        pstmt.setInt(9, p.getStatus());
-    }
-    public List<Product> selectByCategoryId(int categoryId) {
-        String sql = "SELECT p.*, c.category_name, s.supplier_name " +
-                     "FROM products p " +
-                     "LEFT JOIN categories c ON p.category_id = c.category_id " +
-                     "LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id " +
-                     "WHERE p.category_id = ?";
-        return selectBySql(sql, categoryId);
-    }
 
+        // RÀNG BUỘC: Nếu số lượng <= 0, ép status về 0 (Ngừng bán)
+        int finalStatus = (p.getQuantity() <= 0) ? 0 : p.getStatus();
+        pstmt.setInt(9, finalStatus); 
+    }
 
     private List<Product> selectBySql(String sql, Object... args) {
         List<Product> list = new ArrayList<>();
@@ -177,11 +171,16 @@ public class ProductDAO {
         }
         return list;
     }
-     
-
-
-  
-    public List<Product> searchProducts(String keyword, int categoryId, int stockStatus) {
+    public List<Product> selectByCategoryId(int categoryId) {
+    String sql = "SELECT p.*, c.category_name, s.supplier_name " +
+                 "FROM products p " +
+                 "LEFT JOIN categories c ON p.category_id = c.category_id " +
+                 "LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id " +
+                 "WHERE p.category_id = ?";
+    return selectBySql(sql, categoryId);
+    }
+    
+   public List<Product> searchProducts(String keyword, int categoryId, int stockStatus) {
 
         List<Product> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT * FROM products WHERE status = 1");
@@ -233,27 +232,42 @@ public class ProductDAO {
         return list;
     }
 
-    public Product getProductById(int id) {
-        String sql = "SELECT * FROM products WHERE product_id = ?";
+    // --- HÀM NÀY BỊ THIẾU LOGIC, ĐÃ SỬA LẠI ---
+   public Product getProductById(int id) {
+    String sql = "SELECT * FROM products WHERE product_id = ?";
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, id);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            Product p = new Product();
+            p.setProductId(rs.getInt("product_id"));
+            p.setProductName(rs.getString("product_name"));
+            p.setSalePrice(rs.getDouble("sale_price"));
+            p.setQuantity(rs.getInt("quantity"));
+            
+            // --- 2 DÒNG CỰC KỲ QUAN TRỌNG BẠN ĐANG THIẾU ---
+            p.setSupplierId(rs.getInt("supplier_id")); // Phải có dòng này mới lấy được tên NCC
+            p.setImportPrice(rs.getDouble("import_price")); // Lấy giá nhập để hiện lên ô Giá Nhập
+            // ----------------------------------------------
+            
+            p.setBarcode(rs.getString("barcode"));
+            p.setImage(rs.getString("image"));
+            
+            return p;
+        }
+    } catch (Exception e) { e.printStackTrace(); }
+    return null;
+}
+   public boolean isProductExists(String productName) {
+        String sql = "SELECT COUNT(*) FROM products WHERE product_name = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
+            ps.setString(1, productName);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                Product p = new Product();
-                p.setProductId(rs.getInt("product_id"));
-                p.setProductName(rs.getString("product_name"));
-                p.setSalePrice(rs.getDouble("sale_price"));
-                p.setQuantity(rs.getInt("quantity"));
-                p.setBarcode(rs.getString("barcode"));
-                p.setImage(rs.getString("image"));
-                p.setStatus(rs.getInt("status"));
-                return p;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+            if (rs.next()) return rs.getInt(1) > 0;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
     }
 
 }
