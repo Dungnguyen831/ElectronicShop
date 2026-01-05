@@ -86,7 +86,7 @@ public class ListImport extends JPanel {
         topPanel.add(btnRefresh);
 
         // --- 2. BẢNG DỮ LIỆU ---
-        String[] columns = {"ID Phiếu", "Thời Gian", "Nhà Cung Cấp", "Tổng Tiền"};
+        String[] columns = {"ID Phiếu", "Thời Gian", "Nhà Cung Cấp", "Người Nhập","Tổng Tiền"};
         modelImports = new DefaultTableModel(columns, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };

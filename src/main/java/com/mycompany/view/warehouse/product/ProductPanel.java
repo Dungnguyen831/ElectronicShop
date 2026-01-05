@@ -98,7 +98,7 @@ public class ProductPanel extends JPanel {
         }
     });
 
-        // Xử lý SỬA (Đã bổ sung logic)
+        // Xử lý SỬA ()
         btnEdit.addActionListener(e -> {
             int row = tblProducts.getSelectedRow();
             if (row >= 0) {
