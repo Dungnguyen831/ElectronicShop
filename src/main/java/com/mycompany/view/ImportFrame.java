@@ -104,6 +104,7 @@ public class ImportFrame extends JFrame {
         };
         tblImport = new JTable(tableModel);
         tblImport.setRowHeight(35);
+        add(new JScrollPane(tblImport), BorderLayout.CENTER);
 
         // --- 3. SOUTH PANEL ---
         JPanel pnlSouth = new JPanel(new BorderLayout(10, 10));
@@ -147,6 +148,7 @@ public class ImportFrame extends JFrame {
             public void focusLost(FocusEvent e) { lookupProduct(txtProductId.getText()); }
         });
 
+        btnAdd.addActionListener(e -> {
             try {
                 int id = Integer.parseInt(txtProductId.getText().trim());
                 String name = txtName.getText();
@@ -167,20 +169,42 @@ public class ImportFrame extends JFrame {
             }
         });
 
+        btnConfirm.addActionListener(e -> {
+            if (listDetails.isEmpty()) return;
 
             int confirm = JOptionPane.showConfirmDialog(this, "Xác nhận nhập kho phiếu này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
             if (confirm != JOptionPane.YES_OPTION) return;
 
             Import imp = new Import();
-        add(new JScrollPane(tblImport), BorderLayout.CENTER);
+            // Đã lược bỏ imp.setUserId() để tránh lỗi DB như bạn yêu cầu
             
             try {
                 Product p = productDao.getProductById(listDetails.get(0).getProductId());
                 imp.setSupplierId(p != null ? p.getSupplierId() : 1);
             } catch(Exception ex) { imp.setSupplierId(1); }
 
+            double total = listDetails.stream().mapToDouble(d -> d.getQuantity() * d.getInputPrice()).sum();
+            imp.setTotalAmount(total);
+            
             if (importDao.saveImportOrder(imp, listDetails)) {
                 JOptionPane.showMessageDialog(this, "NHẬP KHO THÀNH CÔNG!");
+                resetAll();
+                if (productPanel != null) productPanel.fillTable();
+                
+                // Đóng cửa sổ sau khi thành công
+                this.setVisible(false);
+                this.dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "Lỗi Database! Vui lòng kiểm tra Console.");
+            }
+        });
+
+        btnDelete.addActionListener(e -> {
+            int row = tblImport.getSelectedRow();
+            if (row != -1) {
+                listDetails.remove(row);
+                tableModel.removeRow(row);
+                updateTotal();
             }
         });
     }
@@ -191,8 +215,27 @@ public class ImportFrame extends JFrame {
             Product p = productDao.getProductById(Integer.parseInt(idStr.trim()));
             if (p != null) {
                 txtName.setText(p.getProductName());
+                txtPrice.setText(String.valueOf((int)p.getImportPrice()));
+                // Đổ đúng tên nhà cung cấp từ database của bạn
+                txtSupplier.setText(getSupplierNameFromDB(p.getSupplierId()));
+            } else {
+                txtName.setText("Sản phẩm không tồn tại!");
+                txtSupplier.setText("N/A");
             }
         } catch (Exception e) {}
+    }
+
+    // HÀM LẤY TÊN NHÀ CUNG CẤP TRỰC TIẾP
+    private String getSupplierNameFromDB(int id) {
+        String name = "N/A";
+        String query = "SELECT supplier_name FROM suppliers WHERE supplier_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) name = rs.getString("supplier_name");
+        } catch (Exception e) { e.printStackTrace(); }
+        return name;
     }
 
     private void updateTotal() {
@@ -202,9 +245,14 @@ public class ImportFrame extends JFrame {
     }
 
     private void clearInput() {
+        txtProductId.setText(""); txtName.setText(""); txtQuantity.setText(""); 
+        txtPrice.setText(""); txtSupplier.setText("");
         tblImport.clearSelection();
     }
     private void resetAll() {
+    listDetails.clear();           // Xóa danh sách chi tiết trong bộ nhớ
+    tableModel.setRowCount(0);     // Xóa toàn bộ các dòng trên bảng giao diện
+    updateTotal();                 // Đưa tổng tiền về 0 VNĐ
+    clearInput();                  // Xóa trắng các ô nhập (Mã SP, Tên, Số lượng...)
     }
 }
-        btnAdd.addActionListener(e -> {
