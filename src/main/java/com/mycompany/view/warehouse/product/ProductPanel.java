@@ -168,18 +168,8 @@ public class ProductPanel extends JPanel {
         model.setRowCount(0);
        for (Product p : list) {
             String statusText;
-
-            if (p.getQuantity() <= 0) {
-                statusText = "Ngừng Bán";
-                // Nếu trong DB vẫn đang là 1 (Đang bán) nhưng số lượng = 0
-                if (p.getStatus() != 0) {
-                    p.setStatus(0); // Cập nhật đối tượng tạm thời
-                    dao.updateStatus(p.getProductId(), 0); // Lệnh lưu vào Database
-                }
-            } else {
                 statusText = (p.getStatus() == 1) ? "Đang bán" : "Ngừng bán";
-            }
-
+           
             // Thêm vào model để hiển thị
            model.addRow(new Object[]{
                 p.getProductId(),
