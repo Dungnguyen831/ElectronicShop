@@ -3,19 +3,21 @@ package com.mycompany.view;
 import com.mycompany.dao.*;
 import com.mycompany.model.*;
 import com.mycompany.view.warehouse.product.ProductPanel;
-import com.mycompany.view.warehouse.supplier.SupplierDialog;
+import com.mycompany.database.DatabaseConnection; // Thêm để kết nối DB lấy tên NCC
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.*; // QUAN TRỌNG: Thêm để xóa lỗi gạch đỏ SQL
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.List;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
 public class ImportFrame extends JFrame {
-    private JTextField txtProductId, txtName, txtQuantity, txtPrice;
-    private JComboBox<String> cbSupplier;
-    private JButton btnAdd, btnConfirm, btnQuickAddSup;
+    private JTextField txtProductId, txtName, txtQuantity, txtPrice, txtSupplier; // Thêm txtSupplier
+    private JButton btnAdd, btnConfirm, btnDelete, btnEdit;
     private JTable tblImport;
     private DefaultTableModel tableModel;
     private JLabel lblTotal;
@@ -23,265 +25,234 @@ public class ImportFrame extends JFrame {
     private List<ImportDetail> listDetails = new ArrayList<>();
     private ImportDAO importDao = new ImportDAO();
     private ProductDAO productDao = new ProductDAO();
-    private SupplierDAO supplierDao = new SupplierDAO();
     private ProductPanel productPanel; 
-    
-    private HashMap<String, Integer> supplierMap = new HashMap<>();
     private DecimalFormat formatter = new DecimalFormat("#,###");
 
     public ImportFrame(ProductPanel panel) {
         this.productPanel = panel;
         initComponents();
         initEvents();
-        loadSuppliersToCombo(""); // Nạp danh sách ban đầu
-        setTitle("Nhập Kho Sản Phẩm");
-        setSize(1000, 700);
+        setTitle("HỆ THỐNG NHẬP KHO");
+        setSize(1150, 750);
         setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        btnConfirm.setEnabled(false);
     }
 
     private void initComponents() {
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout(15, 15));
+        ((JPanel)getContentPane()).setBorder(new EmptyBorder(15, 15, 15, 15));
+        getContentPane().setBackground(new Color(245, 245, 250));
 
-        // --- Panel Nhập liệu ---
+        // --- 1. PANEL NHẬP LIỆU ---
         JPanel pnlInput = new JPanel(new GridBagLayout());
-        pnlInput.setBorder(BorderFactory.createTitledBorder(" Thông tin hàng hóa "));
+        pnlInput.setBackground(Color.WHITE);
+        TitledBorder border = BorderFactory.createTitledBorder(" Thông Tin Hàng Hóa ");
+        border.setTitleFont(new Font("Segoe UI", Font.BOLD, 14));
+        pnlInput.setBorder(BorderFactory.createCompoundBorder(border, new EmptyBorder(10, 10, 10, 10)));
+        
         GridBagConstraints g = new GridBagConstraints();
-        g.insets = new Insets(8, 8, 8, 8);
+        g.insets = new Insets(10, 15, 10, 15);
         g.fill = GridBagConstraints.HORIZONTAL;
 
-        // HÀNG 0: NHÀ CUNG CẤP (Searchable + Button +)
         g.gridx = 0; g.gridy = 0; g.weightx = 0;
-        pnlInput.add(new JLabel("Nhà Cung Cấp:"), g);
-        
-        g.gridx = 1; g.gridwidth = 3; g.weightx = 1.0;
-        JPanel pnlSupRow = new JPanel(new BorderLayout(5, 0));
-        cbSupplier = new JComboBox<>();
-        cbSupplier.setEditable(true); // Cho phép gõ tìm kiếm
-        btnQuickAddSup = new JButton("+");
-        btnQuickAddSup.setPreferredSize(new Dimension(45, 25));
-        pnlSupRow.add(cbSupplier, BorderLayout.CENTER); 
-        pnlSupRow.add(btnQuickAddSup, BorderLayout.EAST);
-        pnlInput.add(pnlSupRow, g);
-
-        // HÀNG 1: MÃ SP & TÊN SP (Bỏ nút + ở Tên SP)
-        g.gridwidth = 1; g.gridy = 1;
-        g.gridx = 0; g.weightx = 0;
         pnlInput.add(new JLabel("Mã Sản Phẩm:"), g);
-        
-        g.gridx = 1; g.weightx = 0.3;
+        g.gridx = 1; g.weightx = 0.5;
         txtProductId = new JTextField();
+        txtProductId.setPreferredSize(new Dimension(0, 35));
         pnlInput.add(txtProductId, g);
-        
-        g.gridx = 2; g.weightx = 0;
+
+        g.gridx = 2; g.gridy = 0; g.weightx = 0;
         pnlInput.add(new JLabel("Tên Sản Phẩm:"), g);
-        
-        g.gridx = 3; g.weightx = 0.7;
+        g.gridx = 3; g.weightx = 0.5;
         txtName = new JTextField();
         txtName.setEditable(false);
-        txtName.setBackground(new Color(245, 245, 245));
+        txtName.setBackground(new Color(240, 240, 240));
+        txtName.setPreferredSize(new Dimension(0, 35));
         pnlInput.add(txtName, g);
 
-        // HÀNG 2: SỐ LƯỢNG & GIÁ
-        g.gridy = 2; 
-        g.gridx = 0; g.weightx = 0;
+        g.gridx = 0; g.gridy = 1;
         pnlInput.add(new JLabel("Số Lượng:"), g);
-        
-        g.gridx = 1; g.weightx = 0.3;
-        txtQuantity = new JTextField(); 
+        g.gridx = 1;
+        txtQuantity = new JTextField();
+        txtQuantity.setPreferredSize(new Dimension(0, 35));
         pnlInput.add(txtQuantity, g);
-        
-        g.gridx = 2; g.weightx = 0;
+
+        g.gridx = 2; g.gridy = 1;
         pnlInput.add(new JLabel("Giá Nhập:"), g);
-        
-        g.gridx = 3; g.weightx = 0.7;
-        txtPrice = new JTextField(); 
+        g.gridx = 3;
+        txtPrice = new JTextField();
+        txtPrice.setPreferredSize(new Dimension(0, 35));
         pnlInput.add(txtPrice, g);
 
-        // NÚT THÊM
-        btnAdd = new JButton("Thêm vào phiếu");
-        btnAdd.setBackground(new Color(40, 167, 69)); 
-        btnAdd.setForeground(Color.WHITE);
-        g.gridy = 3; g.gridx = 3; g.fill = GridBagConstraints.NONE; g.anchor = GridBagConstraints.EAST;
-        pnlInput.add(btnAdd, g);
+        // THÊM Ô NHÀ CUNG CẤP VÀO GIAO DIỆN
+        g.gridx = 0; g.gridy = 2;
+        pnlInput.add(new JLabel("Nhà Cung Cấp:"), g);
+        g.gridx = 1; g.gridwidth = 3;
+        txtSupplier = new JTextField();
+        txtSupplier.setEditable(false);
+        txtSupplier.setBackground(new Color(240, 240, 240));
+        txtSupplier.setPreferredSize(new Dimension(0, 35));
+        pnlInput.add(txtSupplier, g);
 
         add(pnlInput, BorderLayout.NORTH);
 
-        // Bảng
-        tableModel = new DefaultTableModel(new String[]{"Mã SP", "Tên SP", "Số lượng", "Giá nhập", "Thành tiền"}, 0);
+        // --- 2. BẢNG DỮ LIỆU ---
+        tableModel = new DefaultTableModel(new String[]{"Mã SP", "Tên Sản Phẩm", "Số Lượng", "Giá Nhập", "Thành Tiền"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
         tblImport = new JTable(tableModel);
+        tblImport.setRowHeight(35);
         add(new JScrollPane(tblImport), BorderLayout.CENTER);
 
-        // Tổng tiền & Xác nhận
-        JPanel pnlSouth = new JPanel(new BorderLayout(20, 0));
-        pnlSouth.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // --- 3. SOUTH PANEL ---
+        JPanel pnlSouth = new JPanel(new BorderLayout(10, 10));
+        pnlSouth.setOpaque(false);
+
         lblTotal = new JLabel("TỔNG TIỀN: 0 VNĐ");
-        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        
-        btnConfirm = new JButton("XÁC NHẬN NHẬP KHO");
-        btnConfirm.setPreferredSize(new Dimension(250, 50));
-        btnConfirm.setBackground(new Color(0, 123, 255)); 
-        btnConfirm.setForeground(Color.WHITE);
-        
-        pnlSouth.add(lblTotal, BorderLayout.WEST); 
-        pnlSouth.add(btnConfirm, BorderLayout.EAST);
+        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        lblTotal.setForeground(new Color(211, 47, 47));
+        pnlSouth.add(lblTotal, BorderLayout.WEST);
+
+        JPanel pnlButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        pnlButtons.setOpaque(false);
+
+        btnAdd = createStyledButton("Thêm Mới", new Color(46, 125, 50));
+        btnEdit = createStyledButton("Cập Nhật", new Color(255, 160, 0));
+        btnDelete = createStyledButton("Xóa Dòng", new Color(117, 117, 117));
+        btnConfirm = createStyledButton("XÁC NHẬN NHẬP KHO", new Color(25, 118, 210));
+        btnConfirm.setPreferredSize(new Dimension(220, 50));
+
+        pnlButtons.add(btnAdd);
+        pnlButtons.add(btnEdit);
+        pnlButtons.add(btnDelete);
+        pnlButtons.add(btnConfirm);
+
+        pnlSouth.add(pnlButtons, BorderLayout.EAST);
         add(pnlSouth, BorderLayout.SOUTH);
     }
 
-    private void initEvents() {
-        // 1. Logic tìm kiếm NCC khi gõ (Searchable)
-        JTextField editor = (JTextField) cbSupplier.getEditor().getEditorComponent();
-        editor.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(KeyEvent e) {
-                // Tránh các phím điều hướng
-                if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN) {
-                    return;
-                }
-                String input = editor.getText();
-                filterSupplier(input);
-            }
-        });
+    private JButton createStyledButton(String text, Color bg) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btn.setBackground(bg);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        return btn;
+    }
 
-        // 2. Tra cứu sản phẩm khi nhập mã (Liên kết Tên & NCC)
+    private void initEvents() {
         txtProductId.addFocusListener(new FocusAdapter() {
             @Override
-            public void focusLost(FocusEvent e) {
-                lookupProduct(txtProductId.getText());
-            }
+            public void focusLost(FocusEvent e) { lookupProduct(txtProductId.getText()); }
         });
 
-        // 3. Nút thêm NCC nhanh
-        btnQuickAddSup.addActionListener(e -> {
-            SupplierDialog dialog = new SupplierDialog(this, null);
-            dialog.setVisible(true);
-            if (dialog.isConfirmed()) {
-                Supplier s = dialog.getSupplier();
-                if (supplierDao.insert(s)) { // Lưu vào DB
-                    loadSuppliersToCombo(""); // Load lại toàn bộ Map
-                    cbSupplier.setSelectedItem(s.getSupplierName()); // Chọn luôn NCC mới
-                }
-            }
-        });
-
-        // 4. Nút thêm vào bảng tạm
         btnAdd.addActionListener(e -> {
             try {
-                int id = Integer.parseInt(txtProductId.getText());
+                int id = Integer.parseInt(txtProductId.getText().trim());
                 String name = txtName.getText();
-                int qty = Integer.parseInt(txtQuantity.getText());
-                double price = Double.parseDouble(txtPrice.getText());
+                int qty = Integer.parseInt(txtQuantity.getText().trim());
+                double price = Double.parseDouble(txtPrice.getText().trim());
                 
+                if(name.isEmpty() || name.equals("Sản phẩm không tồn tại!")) {
+                    JOptionPane.showMessageDialog(this, "Mã sản phẩm không hợp lệ!");
+                    return;
+                }
+
                 tableModel.addRow(new Object[]{id, name, qty, formatter.format(price), formatter.format(qty * price)});
                 listDetails.add(new ImportDetail(id, qty, price));
                 updateTotal();
                 clearInput();
-                txtProductId.requestFocus();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập số liệu hợp lệ!");
+                JOptionPane.showMessageDialog(this, "Số lượng và Giá phải là số!");
             }
         });
 
-        // 5. Nút xác nhận lưu phiếu
-                btnConfirm.addActionListener(e -> {
-            // 1. Kiểm tra đầu vào
-            String selectedSupName = (String) cbSupplier.getSelectedItem();
-            if (listDetails.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Danh sách nhập đang trống!");
-                return;
-            }
-            if (selectedSupName == null || !supplierMap.containsKey(selectedSupName)) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn Nhà cung cấp hợp lệ!");
-                return;
-            }
+        btnConfirm.addActionListener(e -> {
+            if (listDetails.isEmpty()) return;
 
-            // 2. Tạo đối tượng Import
+            int confirm = JOptionPane.showConfirmDialog(this, "Xác nhận nhập kho phiếu này?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+            if (confirm != JOptionPane.YES_OPTION) return;
+
             Import imp = new Import();
-            imp.setSupplierId(supplierMap.get(selectedSupName));
-            imp.setUserId(1); // Tạm thời để mặc định, có thể thay bằng user đăng nhập
-            imp.setTotalAmount(listDetails.stream().mapToDouble(d -> d.getQuantity() * d.getInputPrice()).sum());
+            // Đã lược bỏ imp.setUserId() để tránh lỗi DB như bạn yêu cầu
+            
+            try {
+                Product p = productDao.getProductById(listDetails.get(0).getProductId());
+                imp.setSupplierId(p != null ? p.getSupplierId() : 1);
+            } catch(Exception ex) { imp.setSupplierId(1); }
 
-             //3. Gọi DAO lưu vào Database
+            double total = listDetails.stream().mapToDouble(d -> d.getQuantity() * d.getInputPrice()).sum();
+            imp.setTotalAmount(total);
+            
             if (importDao.saveImportOrder(imp, listDetails)) {
-                JOptionPane.showMessageDialog(this, "Nhập kho thành công! Số lượng tồn đã được cập nhật.");
+                JOptionPane.showMessageDialog(this, "NHẬP KHO THÀNH CÔNG!");
+                resetAll();
+                if (productPanel != null) productPanel.fillTable();
+                
+                // Đóng cửa sổ sau khi thành công
+                this.setVisible(false);
+                this.dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "Lỗi Database! Vui lòng kiểm tra Console.");
+            }
+        });
 
-        // --- QUAN TRỌNG: CẬP NHẬT LẠI BẢNG Ở PRODUCTPANEL ---
-        if (productPanel != null) {
-            // Gọi hàm đổ lại dữ liệu từ Database lên bảng ở màn hình chính
-            productPanel.fillTable(); 
-        }
-        
-        // Xóa sạch bảng tạm và đóng Frame hoặc reset
-        resetAll();
-        // this.dispose(); // Bỏ comment nếu muốn đóng cửa sổ sau khi nhập xong
-    } else {
-        JOptionPane.showMessageDialog(this, "Lỗi: Không thể lưu phiếu nhập vào cơ sở dữ liệu!");
-    }
-});
-    }
-
-    // HÀM QUAN TRỌNG: Khớp với selectByKeyword trong SupplierDAO của bạn
-    private void filterSupplier(String input) {
-        List<Supplier> sups = supplierDao.selectByKeyword(input); // Dùng đúng tên hàm của bạn
-        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
-        
-        // Lưu vào Map để lấy ID sau này
-        for (Supplier s : sups) {
-            model.addElement(s.getSupplierName());
-            supplierMap.put(s.getSupplierName(), s.getSupplierId());
-        }
-        
-        cbSupplier.setModel(model);
-        cbSupplier.getEditor().setItem(input); // Giữ lại chữ đang gõ
-        if (model.getSize() > 0) {
-            cbSupplier.showPopup();
-        }
+        btnDelete.addActionListener(e -> {
+            int row = tblImport.getSelectedRow();
+            if (row != -1) {
+                listDetails.remove(row);
+                tableModel.removeRow(row);
+                updateTotal();
+            }
+        });
     }
 
     private void lookupProduct(String idStr) {
         if (idStr == null || idStr.trim().isEmpty()) return;
         try {
-            int pid = Integer.parseInt(idStr.trim());
-            Product p = productDao.getProductById(pid);
+            Product p = productDao.getProductById(Integer.parseInt(idStr.trim()));
             if (p != null) {
                 txtName.setText(p.getProductName());
-                txtPrice.setText(String.valueOf(p.getImportPrice()));
-                // Đổ GIÁ NHẬP từ database vào ô nhập liệu
-                txtPrice.setText(String.valueOf(p.getImportPrice()));
-                // Tự động nhảy ComboBox nhà cung cấp
-                int idNCC = p.getSupplierId();
-                for (Map.Entry<String, Integer> entry : supplierMap.entrySet()) {
-                    if (entry.getValue().equals(idNCC)) {
-                        cbSupplier.setSelectedItem(entry.getKey());
-                        break;
-                    }
-                }
+                txtPrice.setText(String.valueOf((int)p.getImportPrice()));
+                // Đổ đúng tên nhà cung cấp từ database của bạn
+                txtSupplier.setText(getSupplierNameFromDB(p.getSupplierId()));
+            } else {
+                txtName.setText("Sản phẩm không tồn tại!");
+                txtSupplier.setText("N/A");
             }
         } catch (Exception e) {}
     }
 
-    public void loadSuppliersToCombo(String filter) {
-        List<Supplier> sups = supplierDao.selectAll();
-        DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
-        supplierMap.clear();
-        for (Supplier s : sups) {
-            supplierMap.put(s.getSupplierName(), s.getSupplierId());
-            model.addElement(s.getSupplierName());
-        }
-        cbSupplier.setModel(model);
+    // HÀM LẤY TÊN NHÀ CUNG CẤP TRỰC TIẾP
+    private String getSupplierNameFromDB(int id) {
+        String name = "N/A";
+        String query = "SELECT supplier_name FROM suppliers WHERE supplier_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) name = rs.getString("supplier_name");
+        } catch (Exception e) { e.printStackTrace(); }
+        return name;
     }
 
     private void updateTotal() {
         double total = listDetails.stream().mapToDouble(d -> d.getQuantity() * d.getInputPrice()).sum();
         lblTotal.setText("TỔNG TIỀN: " + formatter.format(total) + " VNĐ");
+        btnConfirm.setEnabled(!listDetails.isEmpty());
     }
 
     private void clearInput() {
-        txtProductId.setText(""); txtName.setText(""); txtQuantity.setText(""); txtPrice.setText("");
+        txtProductId.setText(""); txtName.setText(""); txtQuantity.setText(""); 
+        txtPrice.setText(""); txtSupplier.setText("");
+        tblImport.clearSelection();
     }
-
     private void resetAll() {
-        listDetails.clear();
-        tableModel.setRowCount(0);
-        lblTotal.setText("TỔNG TIỀN: 0 VNĐ");
+    listDetails.clear();           // Xóa danh sách chi tiết trong bộ nhớ
+    tableModel.setRowCount(0);     // Xóa toàn bộ các dòng trên bảng giao diện
+    updateTotal();                 // Đưa tổng tiền về 0 VNĐ
+    clearInput();                  // Xóa trắng các ô nhập (Mã SP, Tên, Số lượng...)
     }
 }

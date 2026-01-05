@@ -221,29 +221,30 @@ public class ProductDAO {
     }
 
     // --- HÀM NÀY BỊ THIẾU LOGIC, ĐÃ SỬA LẠI ---
-    public Product getProductById(int id) {
-        String sql = "SELECT * FROM products WHERE product_id = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                Product p = new Product();
-                p.setProductId(rs.getInt("product_id"));
-                p.setProductName(rs.getString("product_name"));
-                p.setSalePrice(rs.getDouble("sale_price"));
-                
-                // --- DÒNG QUAN TRỌNG BẠN BỊ THIẾU ---
-                p.setQuantity(rs.getInt("quantity")); 
-                // ------------------------------------
-                
-                // Tiện thể lấy luôn mấy cái khác cho đủ bộ nếu cần
-                p.setBarcode(rs.getString("barcode"));
-                p.setImage(rs.getString("image"));
-                
-                return p;
-            }
-        } catch (Exception e) { e.printStackTrace(); }
-        return null;
-    }
+   public Product getProductById(int id) {
+    String sql = "SELECT * FROM products WHERE product_id = ?";
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setInt(1, id);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            Product p = new Product();
+            p.setProductId(rs.getInt("product_id"));
+            p.setProductName(rs.getString("product_name"));
+            p.setSalePrice(rs.getDouble("sale_price"));
+            p.setQuantity(rs.getInt("quantity"));
+            
+            // --- 2 DÒNG CỰC KỲ QUAN TRỌNG BẠN ĐANG THIẾU ---
+            p.setSupplierId(rs.getInt("supplier_id")); // Phải có dòng này mới lấy được tên NCC
+            p.setImportPrice(rs.getDouble("import_price")); // Lấy giá nhập để hiện lên ô Giá Nhập
+            // ----------------------------------------------
+            
+            p.setBarcode(rs.getString("barcode"));
+            p.setImage(rs.getString("image"));
+            
+            return p;
+        }
+    } catch (Exception e) { e.printStackTrace(); }
+    return null;
+}
 }

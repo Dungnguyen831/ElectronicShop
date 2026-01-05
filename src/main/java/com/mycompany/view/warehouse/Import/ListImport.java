@@ -22,9 +22,7 @@ public class ListImport extends JPanel {
     private JSpinner dateStart, dateEnd;
     private JButton btnRefresh, btnFilter;
     
-    // --- KHAI BÁO SORTER TOÀN CỤC ---
     private TableRowSorter<DefaultTableModel> sorter;
-
     private ImportDAO importDAO = new ImportDAO();
     private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
     private DecimalFormat df = new DecimalFormat("#,###");
@@ -36,26 +34,23 @@ public class ListImport extends JPanel {
 
     private void initComponents() {
         setLayout(new BorderLayout(10, 10));
-        setBackground(Style.COLOR_BG_RIGHT);
+        setBackground(Color.WHITE); // Sử dụng màu trắng mặc định nếu Style lỗi
         setBorder(new EmptyBorder(15, 15, 15, 15));
 
         // --- 1. THANH CÔNG CỤ ---
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
-        topPanel.setBackground(Style.COLOR_BG_RIGHT);
+        topPanel.setOpaque(false);
 
-        // a. Ô tìm kiếm & Nút tìm
         topPanel.add(new JLabel("Từ khóa:"));
         txtSearch = new JTextField(15);
         txtSearch.setPreferredSize(new Dimension(150, 30));
         topPanel.add(txtSearch);
 
         btnSearch = new JButton("Tìm");
-        btnSearch.setBackground(Style.COLOR_PRIMARY);
+        btnSearch.setBackground(new Color(0, 123, 255));
         btnSearch.setForeground(Color.WHITE);
-        btnSearch.setCursor(new Cursor(Cursor.HAND_CURSOR));
         topPanel.add(btnSearch);
 
-        // b. Bộ lọc ngày
         topPanel.add(new JLabel("|  Từ ngày:"));
         dateStart = new JSpinner(new SpinnerDateModel());
         dateStart.setEditor(new JSpinner.DateEditor(dateStart, "dd/MM/yyyy"));
@@ -67,9 +62,8 @@ public class ListImport extends JPanel {
         dateEnd.setValue(new Date());
         topPanel.add(dateEnd);
 
-        // c. Nút chức năng
         btnFilter = new JButton("Lọc Ngày");
-        btnFilter.setBackground(Style.COLOR_PRIMARY);
+        btnFilter.setBackground(new Color(40, 167, 69));
         btnFilter.setForeground(Color.WHITE);
         topPanel.add(btnFilter);
         
@@ -85,43 +79,28 @@ public class ListImport extends JPanel {
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
+            
+            // Định nghĩa kiểu dữ liệu để Sorter hoạt động chính xác với số
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                if (columnIndex == 0 || columnIndex == 4) return Integer.class;
+                return Object.class;
+            }
         };
         
         tblImports = new JTable(model);
-        tblImports.setRowHeight(30);
-        tblImports.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        tblImports.getTableHeader().setFont(Style.FONT_BOLD);
-
-        // --- QUAN TRỌNG: KHỞI TẠO SORTER MỘT LẦN ---
+        tblImports.setRowHeight(35);
+        
         sorter = new TableRowSorter<>(model);
         tblImports.setRowSorter(sorter);
-        
-        // Sự kiện click dòng -> Điền tên vào ô tìm kiếm
-        tblImports.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int row = tblImports.getSelectedRow();
-                if (row >= 0) {
-                    // Cần convertRowIndexToModel vì khi lọc thứ tự dòng sẽ thay đổi
-                    int modelRow = tblImports.convertRowIndexToModel(row);
-                    String productName = model.getValueAt(modelRow, 3).toString();
-                    txtSearch.setText(productName);
-                }
-            }
-        });
 
         JScrollPane scrollPane = new JScrollPane(tblImports);
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230)));
         add(scrollPane, BorderLayout.CENTER);
 
-        // --- 3. XỬ LÝ SỰ KIỆN ---
+        // --- 3. SỰ KIỆN ---
+        btnSearch.addActionListener(e -> applySearchFilter());
+        txtSearch.addActionListener(e -> applySearchFilter());
 
-        // A. Xử lý tìm kiếm (Nút bấm + Phím Enter)
-        ActionListener searchAction = e -> applySearchFilter();
-        btnSearch.addActionListener(searchAction);
-        txtSearch.addActionListener(searchAction);
-
-        // B. Lọc ngày
         btnFilter.addActionListener(e -> {
             Date start = (Date) dateStart.getValue();
             Date end = (Date) dateEnd.getValue();
@@ -132,62 +111,90 @@ public class ListImport extends JPanel {
             loadDataByDate(start, end);
         });
 
-        // C. Làm mới
         btnRefresh.addActionListener(e -> {
             txtSearch.setText("");
-            dateEnd.setValue(new Date());
-            loadData();
-            // Reset bộ lọc
             sorter.setRowFilter(null);
-          //  JOptionPane.showMessageDialog(this, "Đã cập nhật dữ liệu mới nhất!");
+            loadData();
+        });
+
+        // Click dòng đổ vào ô tìm kiếm
+        tblImports.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = tblImports.getSelectedRow();
+                if (row >= 0) {
+                    int modelRow = tblImports.convertRowIndexToModel(row);
+                    txtSearch.setText(model.getValueAt(modelRow, 3).toString());
+                }
+            }
         });
     }
 
-    // --- CÁC HÀM HỖ TRỢ ---
-
     private void loadData() {
         model.setRowCount(0);
-        List<Object[]> data = importDAO.selectAllJoined();
-        for (Object[] row : data) formatAndAddRow(row);
+        try {
+            List<Object[]> data = importDAO.selectAllJoined();
+            for (Object[] row : data) {
+                processRow(row);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void loadDataByDate(Date start, Date end) {
         model.setRowCount(0);
-        List<Object[]> data = importDAO.selectByDateRange(start, end);
-        if (data.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Không có dữ liệu trong khoảng thời gian này!");
+        try {
+            List<Object[]> data = importDAO.selectByDateRange(start, end);
+            if (data.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Không có dữ liệu!");
+            }
+            for (Object[] row : data) {
+                processRow(row);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        for (Object[] row : data) formatAndAddRow(row);
     }
 
-    private void formatAndAddRow(Object[] row) {
-        if (row[1] != null && row[1] instanceof Date) {
-            row[1] = sdf.format(row[1]);
-        }
-        // Format tiền tệ để dễ nhìn
-        if (row[5] instanceof Number) row[5] = df.format(row[5]);
-        if (row[6] instanceof Number) row[6] = df.format(row[6]);
+    // Hàm xử lý dữ liệu dòng để tránh lỗi ép kiểu (Cast Exception)
+    private void processRow(Object[] row) {
+        Object[] formattedRow = new Object[row.length];
         
-        model.addRow(row);
+        // ID
+        formattedRow[0] = row[0];
+        
+        // Thời gian
+        if (row[1] != null) {
+            formattedRow[1] = sdf.format(row[1]);
+        }
+        
+        // Nhà CC & Sản phẩm
+        formattedRow[2] = row[2];
+        formattedRow[3] = row[3];
+        
+        // Số lượng
+        formattedRow[4] = row[4];
+        
+        // Giá & Tổng tiền (Định dạng số có dấu phẩy)
+        try {
+            formattedRow[5] = df.format(Double.parseDouble(row[5].toString()));
+            formattedRow[6] = df.format(Double.parseDouble(row[6].toString()));
+        } catch (Exception e) {
+            formattedRow[5] = row[5];
+            formattedRow[6] = row[6];
+        }
+        
+        model.addRow(formattedRow);
     }
 
-    // --- HÀM TÌM KIẾM ĐÃ SỬA LỖI ---
     private void applySearchFilter() {
         String text = txtSearch.getText().trim();
-        
-        // Debug: In ra console để biết nút đã hoạt động chưa
-        System.out.println("Đang tìm kiếm từ khóa: " + text);
-
         if (text.isEmpty()) {
             sorter.setRowFilter(null);
         } else {
-            try {
-                // (?i) nghĩa là không phân biệt hoa thường
-                // Lọc trên cột 2 (Nhà CC) và cột 3 (Sản phẩm)
-                sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 2, 3));
-            } catch (java.util.regex.PatternSyntaxException e) {
-                JOptionPane.showMessageDialog(this, "Từ khóa tìm kiếm chứa ký tự đặc biệt không hợp lệ!");
-            }
+            // Lọc không phân biệt hoa thường trên tất cả các cột
+            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text));
         }
     }
 }
