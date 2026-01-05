@@ -6,9 +6,9 @@ import java.sql.*;
 import java.util.List;
 
 public class OrderDAO {
-
     public boolean createOrder(int userId, int customerId, Integer voucherId, double totalAmount, List<OrderDetail> details, int usedPoints) {
         Connection conn = null;
+        //Khai báo các biến preparedStatement để truyền tham số vào câu lệnh
         PreparedStatement psOrder = null;
         PreparedStatement psDetail = null;
         PreparedStatement psStock = null;
@@ -16,11 +16,13 @@ public class OrderDAO {
         PreparedStatement psPoint = null;
 
         try {
+            //Kết nối db
             conn = DatabaseConnection.getConnection();
             conn.setAutoCommit(false); // BẮT ĐẦU TRANSACTION
 
             // 1. Insert bảng ORDERS
             String sqlOrder = "INSERT INTO orders(user_id, customer_id, voucher_id, total_amount, payment_method) VALUES(?, ?, ?, ?, 'CASH')";
+            //Trả về id của đơn hàng 
             psOrder = conn.prepareStatement(sqlOrder, Statement.RETURN_GENERATED_KEYS);
             psOrder.setInt(1, userId);
             psOrder.setInt(2, customerId);
@@ -31,7 +33,7 @@ public class OrderDAO {
             psOrder.setDouble(4, totalAmount);
             psOrder.executeUpdate();
 
-            // Lấy Order ID vừa tạo
+            // Lấy Order ID vừa tạo gán vào biên orderID 
             ResultSet rs = psOrder.getGeneratedKeys();
             int orderId = 0;
             if (rs.next()) orderId = rs.getInt(1);

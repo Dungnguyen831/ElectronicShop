@@ -315,7 +315,7 @@ private void resetVoucherState() {
 
         boolean ok = orderDAO.createOrder(currentUser.getUserId(), c.getCustomerId(), appliedVoucherId, finalTotal, cartItems, ptsUsed);
         if(ok) {
-            pnlProductList.loadData(null, 0);
+            pnlProductList.loadData(null, 0,0);
             JOptionPane.showMessageDialog(this, "THANH TOÁN THÀNH CÔNG!");
             resetAll();
             
