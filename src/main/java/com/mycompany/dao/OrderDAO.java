@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import com.mycompany.database.DatabaseConnection;
 import com.mycompany.model.OrderDetail;
 import java.sql.*;
+import java.util.Calendar;
 import java.util.List;
 
 public class OrderDAO {
-
     public boolean createOrder(int userId, int customerId, Integer voucherId, double totalAmount, List<OrderDetail> details, int usedPoints) {
         Connection conn = null;
         PreparedStatement psOrder = null;
@@ -186,18 +186,74 @@ public class OrderDAO {
         return false;
     }
 
-    // 4. Hủy đơn hàng
-    public boolean cancelOrder(int orderId) {
-        String sql = "UPDATE orders SET status = 0 WHERE order_id=?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    public List<Order> filterOrders(String staffName, java.util.Date fromDate, java.util.Date toDate) {
+        List<Order> list = new ArrayList<>();
+        // Query cơ bản nối bảng
+        String sql = "SELECT o.*, u.full_name as staff_name, c.full_name as customer_name " +
+                     "FROM orders o " +
+                     "LEFT JOIN users u ON o.user_id = u.user_id " +
+                     "LEFT JOIN customers c ON o.customer_id = c.customer_id " +
+                     "WHERE 1=1 "; // Mẹo để nối chuỗi điều kiện dễ hơn
 
-            ps.setInt(1, orderId);
-            return ps.executeUpdate() > 0;
+        List<Object> params = new ArrayList<>();
 
+        // 1. Điều kiện tên nhân viên (nếu có nhập)
+        if (staffName != null && !staffName.isEmpty()) {
+            sql += " AND u.full_name LIKE ? ";
+            params.add("%" + staffName + "%");
+        }
+
+        // 2. Điều kiện ngày tháng (nếu có chọn)
+        if (fromDate != null && toDate != null) {
+            sql += " AND o.order_date BETWEEN ? AND ? ";
+            // Ép thời gian về đầu ngày và cuối ngày
+            params.add(new java.sql.Timestamp(getStartOfDay(fromDate).getTime()));
+            params.add(new java.sql.Timestamp(getEndOfDay(toDate).getTime()));
+        }
+
+        sql += " ORDER BY o.order_date DESC"; // Sắp xếp mới nhất lên đầu
+
+        try {
+            Connection conn = DatabaseConnection.getConnection();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                // ... (Code map dữ liệu giống hàm getAllOrders cũ) ...
+                // Bạn copy đoạn map dữ liệu ở hàm cũ vào đây nhé
+                Order o = new Order();
+                o.setOrderId(rs.getInt("order_id"));
+                o.setUserId(rs.getInt("user_id"));
+                o.setCustomerId(rs.getInt("customer_id"));
+                o.setTotalAmount(rs.getDouble("total_amount"));
+                o.setPaymentMethod(rs.getString("payment_method"));
+                o.setStatus(rs.getInt("status"));
+                o.setOrderDate(rs.getTimestamp("order_date"));
+                o.setStaffName(rs.getString("staff_name"));
+                o.setCustomerName(rs.getString("customer_name"));
+                list.add(o);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
+        return list;
+    }
+
+    
+    // Helper xử lý ngày (Bạn có thể để trong DAO hoặc Utils)
+    private java.util.Date getStartOfDay(java.util.Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(Calendar.HOUR_OF_DAY, 0); cal.set(Calendar.MINUTE, 0); cal.set(Calendar.SECOND, 0);
+        return cal.getTime();
+    }
+
+    private java.util.Date getEndOfDay(java.util.Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(Calendar.HOUR_OF_DAY, 23); cal.set(Calendar.MINUTE, 59); cal.set(Calendar.SECOND, 59);
+        return cal.getTime();
     }
 }

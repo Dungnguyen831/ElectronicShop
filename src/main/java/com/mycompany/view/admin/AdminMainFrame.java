@@ -6,6 +6,7 @@ import com.mycompany.view.LoginFrame; // Đảm bảo đúng package của Login
 import com.mycompany.view.admin.UserPanel; // Đảm bảo đúng package
 import com.mycompany.view.admin.CustomerPanel; // Đảm bảo đúng package
 import com.mycompany.view.admin.HomePanel;
+import com.mycompany.view.admin.RevenuePanel;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -35,6 +36,7 @@ public class AdminMainFrame extends JFrame implements ActionListener {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
+        
 
         // --- 1. SIDEBAR (GridLayout 10 hàng) ---
         sidebarPanel = new JPanel();
@@ -99,7 +101,7 @@ public class AdminMainFrame extends JFrame implements ActionListener {
         contentPanel = new JPanel(cardLayout);
 
         contentPanel.add(new HomePanel(), "HOME");
-        contentPanel.add(createDummyPanel("Màn hình báo cáo doanh thu", Color.LIGHT_GRAY), "REVENUE");
+        contentPanel.add(new RevenuePanel(), "REVENUE");
         contentPanel.add(new VoucherPanel(), "VOUCHER");
         contentPanel.add(new UserPanel(), "USER");
         contentPanel.add(new CustomerPanel(), "CUSTOMER");
@@ -176,15 +178,6 @@ public class AdminMainFrame extends JFrame implements ActionListener {
 
         btn.addActionListener(this);
         return btn;
-    }
-
-    private JPanel createDummyPanel(String text, Color color) {
-        JPanel p = new JPanel(new BorderLayout());
-        p.setBackground(color);
-        JLabel l = new JLabel(text, JLabel.CENTER);
-        l.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 30));
-        p.add(l);
-        return p;
     }
 
     @Override

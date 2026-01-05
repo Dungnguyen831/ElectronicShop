@@ -39,6 +39,7 @@ public class ProductDialog extends JDialog {
         }
         
         setTitle(isEdit ? "Sửa sản phẩm" : "Thêm sản phẩm mới");
+        setPreferredSize(new Dimension(300, 400));
         pack();
         setLocationRelativeTo(parent);
     }

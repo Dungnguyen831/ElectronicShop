@@ -1,126 +1,139 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.mycompany.view.admin;
 
+import com.mycompany.dao.HomeDAO;
+import com.mycompany.dao.StatisticalDAO;
 import com.mycompany.util.Style;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.SwingConstants;
+import com.mycompany.util.UIHelper; // [MỚI] Import Helper vừa tạo
+import java.awt.*;
+import java.text.DecimalFormat;
+import java.util.List;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 
-/**
- *
- * @author Nguyen Anh Dung
- */
 public class HomePanel extends JPanel {
+
+    // Components
+    private JLabel lblRevenueVal, lblOrderVal, lblCustomerVal, lblLowStockVal;
+    private JTable tblTopProducts, tblTopStaff;
+    private DefaultTableModel modelTopProducts, modelTopStaff;
+    private SimpleLineChart pnlChart; 
+    
+    // Logic & Data
+    private HomeDAO homeDAO = new HomeDAO();
+    private StatisticalDAO statsDAO = new StatisticalDAO();
+    private DecimalFormat df = new DecimalFormat("#,##0 đ");
 
     public HomePanel() {
         initComponents();
-        // Sau này bạn sẽ gọi hàm loadDataFromDB() ở đây
+        loadDataFromDB();
     }
 
     private void initComponents() {
-        setLayout(new BorderLayout(20, 20)); // Khoảng cách giữa các phần
+        // Layout chính
+        setLayout(new BorderLayout(20, 20));
         setBackground(Color.WHITE);
-        setBorder(new EmptyBorder(20, 20, 20, 20)); // Căn lề 4 phía
+        setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // --- PHẦN 1: CÁC THẺ THỐNG KÊ (TOP) ---
-        JPanel pnlCards = new JPanel(new GridLayout(1, 4, 20, 0)); // 1 hàng, 4 cột, cách nhau 20px
+        // === 1. TOP CARDS ===
+        JPanel pnlCards = new JPanel(new GridLayout(1, 4, 20, 0));
         pnlCards.setBackground(Color.WHITE);
-        pnlCards.setPreferredSize(new Dimension(0, 140)); // Chiều cao cố định cho thẻ
+        pnlCards.setPreferredSize(new Dimension(0, 130));
 
-        // Thêm 4 thẻ với màu sắc khác nhau
-        // Lưu ý: Số liệu đang là giả định (Hard-code), sau này thay bằng biến từ DAO
-        pnlCards.add(createCard("DOANH THU NGÀY", "15,500,000 đ", new Color(46, 204, 113))); // Màu Xanh lá
-        pnlCards.add(createCard("ĐƠN HÀNG MỚI", "24 Đơn", new Color(52, 152, 219)));     // Màu Xanh dương
-        pnlCards.add(createCard("KHÁCH HÀNG", "150 Khách", new Color(155, 89, 182)));     // Màu Tím
-        pnlCards.add(createCard("SẮP HẾT HÀNG", "05 SP", new Color(231, 76, 60)));      // Màu Đỏ (Cảnh báo)
+        lblRevenueVal = new JLabel("Loading...");
+        lblOrderVal = new JLabel("Loading...");
+        lblCustomerVal = new JLabel("Loading...");
+        lblLowStockVal = new JLabel("Loading...");
+
+        // [MỚI] Gọi hàm từ UIHelper
+        pnlCards.add(UIHelper.createCard("DOANH THU HÔM NAY", lblRevenueVal, new Color(46, 204, 113)));
+        pnlCards.add(UIHelper.createCard("ĐƠN HÀNG HÔM NAY", lblOrderVal, new Color(52, 152, 219)));
+        pnlCards.add(UIHelper.createCard("TỔNG KHÁCH HÀNG", lblCustomerVal, new Color(155, 89, 182)));
+        pnlCards.add(UIHelper.createCard("SẮP HẾT HÀNG", lblLowStockVal, new Color(231, 76, 60)));
 
         this.add(pnlCards, BorderLayout.NORTH);
 
-        // --- PHẦN 2: BẢNG ĐƠN HÀNG GẦN ĐÂY (CENTER) ---
-        JPanel pnlTable = new JPanel(new BorderLayout());
-        pnlTable.setBackground(Color.WHITE);
-        pnlTable.setBorder(BorderFactory.createTitledBorder(
-                BorderFactory.createLineBorder(Style.COLOR_PRIMARY), 
-                "Đơn Hàng Gần Đây", 
-                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, 
-                javax.swing.border.TitledBorder.DEFAULT_POSITION, 
-                new Font("Segoe UI", Font.BOLD, 14), 
-                Style.COLOR_PRIMARY
+        // === 2. BODY (Biểu đồ + Bảng Top) ===
+        JPanel pnlBody = new JPanel(new BorderLayout(0, 20));
+        pnlBody.setBackground(Color.WHITE);
+
+        // --- PHẦN BIỂU ĐỒ ---
+        JPanel pnlChartContainer = new JPanel(new BorderLayout());
+        pnlChartContainer.setBackground(Color.WHITE);
+        pnlChartContainer.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                "Biểu Đồ Doanh Thu 7 Ngày Gần Nhất",
+                0, 0, new Font("Segoe UI", Font.BOLD, 14), Color.DARK_GRAY
         ));
+        pnlChart = new SimpleLineChart();
+        pnlChartContainer.add(pnlChart, BorderLayout.CENTER);
+        pnlBody.add(pnlChartContainer, BorderLayout.NORTH);
 
-        // Tạo bảng dữ liệu
-        String[] columns = {"Mã Đơn", "Khách Hàng", "Ngày Mua", "Tổng Tiền", "Trạng Thái"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Không cho sửa trực tiếp trên bảng Dashboard
-            }
-        };
 
-        // Dữ liệu mẫu (Dummy Data) - Sau này lấy từ OrderDAO
-        model.addRow(new Object[]{"#ORD001", "Nguyễn Văn A", "03/01/2026", "5,000,000", "Hoàn thành"});
-        model.addRow(new Object[]{"#ORD002", "Trần Thị B", "03/01/2026", "12,500,000", "Hoàn thành"});
-        model.addRow(new Object[]{"#ORD003", "Lê Văn C", "02/01/2026", "500,000", "Đã hủy"});
-        model.addRow(new Object[]{"#ORD004", "Phạm Văn D", "02/01/2026", "2,100,000", "Hoàn thành"});
+        // --- PHẦN DANH SÁCH TOP ---
+        JPanel pnlLists = new JPanel(new GridLayout(1, 2, 20, 0));
+        pnlLists.setBackground(Color.WHITE);
 
-        JTable table = new JTable(model);
-        table.setRowHeight(30);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
-        table.getTableHeader().setBackground(new Color(240, 240, 240));
+        // Bảng Trái: Top SP
+        // [MỚI] Gọi UIHelper.createTablePanel
+        JPanel pnlLeft = UIHelper.createTablePanel("Top 5 Sản Phẩm Bán Chạy (Tháng)", Style.COLOR_PRIMARY);
+        String[] colsProd = {"Tên Sản Phẩm", "Đã Bán"};
+        modelTopProducts = new DefaultTableModel(colsProd, 0) { @Override public boolean isCellEditable(int r, int c) { return false; } };
         
-        // Thêm bảng vào ScrollPane
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(null); // Bỏ viền thừa
-        pnlTable.add(scrollPane, BorderLayout.CENTER);
+        // [MỚI] Gọi UIHelper.createStyledTable
+        tblTopProducts = UIHelper.createStyledTable(modelTopProducts);
+        
+        JScrollPane scrLeft = new JScrollPane(tblTopProducts);
+        scrLeft.setBorder(null); scrLeft.getViewport().setBackground(Color.WHITE);
+        pnlLeft.add(scrLeft, BorderLayout.CENTER); // Đã fix logic trong UIHelper nên để Center hay North đều ổn, nhưng giữ Center cho đẹp trong khung panel
 
-        this.add(pnlTable, BorderLayout.CENTER);
+        // Bảng Phải: Top NV
+        JPanel pnlRight = UIHelper.createTablePanel("Top 5 Nhân Viên Xuất Sắc (Tháng)", new Color(230, 126, 34));
+        String[] colsStaff = {"Tên Nhân Viên", "Số Đơn", "Doanh Số"};
+        modelTopStaff = new DefaultTableModel(colsStaff, 0) { @Override public boolean isCellEditable(int r, int c) { return false; } };
+        
+        tblTopStaff = UIHelper.createStyledTable(modelTopStaff);
+        
+        JScrollPane scrRight = new JScrollPane(tblTopStaff);
+        scrRight.setBorder(null); scrRight.getViewport().setBackground(Color.WHITE);
+        pnlRight.add(scrRight, BorderLayout.CENTER);
+
+        pnlLists.add(pnlLeft);
+        pnlLists.add(pnlRight);
+
+        pnlBody.add(pnlLists, BorderLayout.CENTER);
+
+        this.add(pnlBody, BorderLayout.CENTER);
+        
+        // Nút Refresh
+        JButton btnRefresh = new JButton("Cập nhật dữ liệu mới nhất");
+        btnRefresh.setFont(Style.FONT_BOLD);
+        btnRefresh.addActionListener(e -> loadDataFromDB());
+        this.add(btnRefresh, BorderLayout.SOUTH);
     }
 
-    // Hàm tạo giao diện cho 1 thẻ thống kê
-    private JPanel createCard(String title, String value, Color bgColor) {
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(bgColor);
-        card.setBorder(new EmptyBorder(15, 20, 15, 20)); // Padding bên trong thẻ
+    public void loadDataFromDB() {
+        // 1. Load Cards
+        lblRevenueVal.setText(df.format(homeDAO.getTodayRevenue()));
+        lblOrderVal.setText(homeDAO.getTodayOrderCount() + " Đơn");
+        lblCustomerVal.setText(homeDAO.getTotalCustomers() + " Khách");
+        lblLowStockVal.setText(homeDAO.getLowStockCount() + " SP");
 
-        // Tiêu đề nhỏ phía trên
-        JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblTitle.setForeground(new Color(255, 255, 255, 200)); // Trắng mờ
+        // 2. Load Chart
+        pnlChart.setData(statsDAO.getRevenueLast7Days());
 
-        // Giá trị lớn ở giữa
-        JLabel lblValue = new JLabel(value);
-        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        lblValue.setForeground(Color.WHITE);
+        // 3. Load Top Products
+        modelTopProducts.setRowCount(0);
+        List<Object[]> listProd = homeDAO.getTopSellingProducts();
+        for (Object[] row : listProd) {
+            modelTopProducts.addRow(new Object[]{row[0], row[1] + " cái"});
+        }
 
-        // Icon tượng trưng (Dùng text emoji cho đơn giản, nếu có ảnh thì dùng ImageIcon)
-        JLabel lblIcon = new JLabel("📊"); 
-        lblIcon.setFont(new Font("Segoe UI", Font.PLAIN, 40));
-        lblIcon.setForeground(new Color(255, 255, 255, 100)); // Rất mờ
-        lblIcon.setHorizontalAlignment(SwingConstants.RIGHT);
-
-        // Layout text bên trái
-        JPanel pnlText = new JPanel(new GridLayout(2, 1));
-        pnlText.setOpaque(false); // Trong suốt
-        pnlText.add(lblTitle);
-        pnlText.add(lblValue);
-
-        card.add(pnlText, BorderLayout.CENTER);
-        card.add(lblIcon, BorderLayout.EAST);
-
-        return card;
+        // 4. Load Top Staff
+        modelTopStaff.setRowCount(0);
+        List<Object[]> listStaff = homeDAO.getTopEmployees();
+        for (Object[] row : listStaff) {
+            modelTopStaff.addRow(new Object[]{row[0], row[1] + " đơn", df.format(row[2])});
+        }
     }
 }
