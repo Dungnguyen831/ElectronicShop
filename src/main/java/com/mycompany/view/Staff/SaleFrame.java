@@ -76,12 +76,13 @@ public class SaleFrame extends JFrame {
         pnlMain.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         pnlMain.setBackground(new Color(240, 240, 240));
 
+
         pnlCart = new CartPanel(cartItems, 
             () -> switchToPayment(), 
             (item, delta) -> updateQty(item, delta), 
             (item) -> removeItem(item)
         );
-        pnlMain.add(pnlCart);
+pnlMain.add(pnlCart);
 
         cardLayoutRight = new CardLayout();
         pnlRightContainer = new JPanel(cardLayoutRight);
@@ -158,8 +159,8 @@ public class SaleFrame extends JFrame {
 
             // Kiểm tra: Nếu (Số lượng hiện tại trong giỏ + 1) > (Số lượng trong kho) -> CHẶN NGAY
             if (item.getQuantity() + delta > stockInDB) {
-                JOptionPane.showMessageDialog(this, 
-                    "Không thể tăng! Kho chỉ còn: " + stockInDB, 
+                JOptionPane.showMessageDialog(this,
+"Không thể tăng! Kho chỉ còn: " + stockInDB, 
                     "Hết hàng", JOptionPane.WARNING_MESSAGE);
                 return; // Dừng lại, không tăng
             }
@@ -299,7 +300,7 @@ private void resetVoucherState() {
     private void processOrder() {
         String ph = pnlPayment.txtPhone.getText().trim();
         String em = pnlPayment.txtEmail.getText().trim();
-        if(ph.isEmpty()) { JOptionPane.showMessageDialog(this, "Nhập SĐT!"); return; }
+if(ph.isEmpty()) { JOptionPane.showMessageDialog(this, "Nhập SĐT!"); return; }
         if(!isValidPhone(ph)) { JOptionPane.showMessageDialog(this, "SĐT sai!"); return; }
         if(!isValidEmail(em)) { JOptionPane.showMessageDialog(this, "Email sai!"); return; }
         
@@ -343,4 +344,5 @@ private void resetVoucherState() {
     private User createDefaultUser() {
         User u = new User(); u.setUserId(2); u.setUsername("sales"); u.setFullName("Tran Ban Hang"); u.setRoleId(2); return u;
     }
+   
 }

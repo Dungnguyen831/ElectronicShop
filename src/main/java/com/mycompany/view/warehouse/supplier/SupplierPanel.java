@@ -1,10 +1,11 @@
 package com.mycompany.view.warehouse.supplier;
 
-import com.mycompany.view.warehouse.supplier.SupplierDialog;
 import com.mycompany.dao.SupplierDAO;
 import com.mycompany.model.Supplier;
 import com.mycompany.util.Style;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -40,6 +41,7 @@ public class SupplierPanel extends JPanel {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
         };
+       
         tblSuppliers = new JTable(model);
         tblSuppliers.setRowHeight(30);
         add(new JScrollPane(tblSuppliers), BorderLayout.CENTER);
@@ -146,7 +148,7 @@ public class SupplierPanel extends JPanel {
                 model.addRow(new Object[]{
                     s.getSupplierId(),
                     s.getSupplierName(),
-                    s.getContactPerson(), // Đã khớp với database
+                    s.getContactPerson(), 
                     s.getPhone(),
                     s.getAddress(),
                     s.isIsActive() ? "Hoạt động" : "Ngừng"

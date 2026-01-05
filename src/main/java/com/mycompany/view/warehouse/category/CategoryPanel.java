@@ -30,13 +30,13 @@ public class CategoryPanel extends JPanel {
         txtSearch = new JTextField(25);
         JButton btnSearch = new JButton("Tìm kiếm");
         
-        pnlTop.add(new JLabel("Tên loại:"));
+        pnlTop.add(new JLabel("Tên Danh Mục:"));
         pnlTop.add(txtSearch);
         pnlTop.add(btnSearch);
         add(pnlTop, BorderLayout.NORTH);
 
         // --- CENTER: Bảng hiển thị (Khớp database) ---
-        String[] headers = {"ID", "Tên loại", "Mô tả"};
+        String[] headers = {"ID", "Tên Danh Mục", "Mô tả"};
         model = new DefaultTableModel(headers, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -70,7 +70,7 @@ public class CategoryPanel extends JPanel {
             d.setVisible(true);
             if (d.isConfirmed() && dao.insert(d.getCategory())) {
                 fillTable();
-                JOptionPane.showMessageDialog(this, "Thêm loại sản phẩm thành công!");
+                JOptionPane.showMessageDialog(this, "Thêm Danh Mục sản phẩm thành công!");
             }
         });
 
@@ -90,7 +90,7 @@ public class CategoryPanel extends JPanel {
                     JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
                 }
             } else {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn một loại để sửa!");
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một Danh Mục để sửa!");
             }
         });
 
@@ -99,7 +99,7 @@ public class CategoryPanel extends JPanel {
             int row = tblCategories.getSelectedRow();
             if (row >= 0) {
                 int id = (int) tblCategories.getValueAt(row, 0);
-                int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn xóa loại ID: " + id + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+                int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn xóa Danh Mục ID: " + id + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
                     dao.delete(id);
                     fillTable();
@@ -107,7 +107,7 @@ public class CategoryPanel extends JPanel {
             }
         });
 
-        // Thêm sự kiện Double Click để xem danh sách sản phẩm thuộc loại này
+        // Thêm sự kiện Double Click để xem danh sách sản phẩm thuộc Danh mục này
         tblCategories.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {

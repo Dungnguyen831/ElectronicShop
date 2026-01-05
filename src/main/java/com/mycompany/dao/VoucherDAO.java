@@ -25,6 +25,7 @@ public class VoucherDAO {
     // 2. Thêm mới
     public boolean add(Voucher v) {
         String sql = "INSERT INTO vouchers (code, discount_percent, max_discount, start_date, end_date, quantity, status) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, v.getCode());
@@ -68,7 +69,7 @@ public class VoucherDAO {
     // 5. Tìm kiếm theo Mã (Cho ô tìm kiếm Admin)
     public List<Voucher> search(String keyword) {
         List<Voucher> list = new ArrayList<>();
-        String sql = "SELECT * FROM vouchers WHERE code LIKE ?";
+String sql = "SELECT * FROM vouchers WHERE code LIKE ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, "%" + keyword + "%");

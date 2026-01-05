@@ -22,7 +22,7 @@ public class ProductListDialog extends JDialog {
         initComponents();
         loadProducts(category.getCategoryId());
         
-        setTitle("Danh sách sản phẩm thuộc loại: " + category.getCategoryName());
+        setTitle("Danh sách sản phẩm thuộc Danh Mục: " + category.getCategoryName());
         setSize(1100, 650); 
         setLocationRelativeTo(parent);
     }
@@ -33,10 +33,10 @@ public class ProductListDialog extends JDialog {
 
         // --- TOP: Header hiển thị tên LOẠI và SỐ LƯỢNG ---
         JPanel pnlHeader = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        pnlHeader.setBackground(new Color(52, 73, 94)); // Màu xanh đậm chuyên nghiệp
+        pnlHeader.setBackground(new Color(52, 73, 94)); 
         pnlHeader.setPreferredSize(new Dimension(0, 60));
         
-        lblTitle = new JLabel("LOẠI: " + category.getCategoryName().toUpperCase());
+        lblTitle = new JLabel();//("Danh Mục: " + category.getCategoryName().toUpperCase());
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
         lblTitle.setForeground(Color.WHITE);
         
@@ -44,7 +44,6 @@ public class ProductListDialog extends JDialog {
         add(pnlHeader, BorderLayout.NORTH);
 
         // --- CENTER: Bảng hiển thị thông tin ---
-        // Sửa lại header cột cho chính xác
         String[] columns = {
             "ID", "Nhà cung cấp", "Tên sản phẩm", "Mã vạch", 
             "Giá nhập", "Giá bán", "Số lượng", "Trạng thái", "Ngày tạo"
@@ -56,7 +55,7 @@ public class ProductListDialog extends JDialog {
         };
         
         tblProducts = new JTable(model);
-        tblProducts.setRowHeight(35); // Tăng chiều cao dòng cho dễ nhìn
+        tblProducts.setRowHeight(35); 
         
         // Tùy chỉnh độ rộng cột
         tblProducts.getColumnModel().getColumn(0).setPreferredWidth(50);  // ID
@@ -101,6 +100,6 @@ public class ProductListDialog extends JDialog {
         }
         
         // Cập nhật tiêu đề kèm tổng số lượng sản phẩm
-        lblTitle.setText("LOẠI: " + category.getCategoryName().toUpperCase() + " (" + list.size() + " sản phẩm)");
+        lblTitle.setText("Danh Mục: " + category.getCategoryName().toUpperCase() + " (" + list.size() + " sản phẩm)");
     }
 }

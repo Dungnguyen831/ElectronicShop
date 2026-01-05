@@ -9,12 +9,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 
 public class ProductPanel extends JPanel {
     private JTable tblProducts;
     private DefaultTableModel model;
     private JTextField txtSearch;
     private ProductDAO dao = new ProductDAO();
+    private JComboBox<String> cbQtyFilter;
 
     public ProductPanel() {
         initComponents();
@@ -35,9 +37,16 @@ public class ProductPanel extends JPanel {
         pnlTop.add(txtSearch);
         pnlTop.add(btnSearch);
         add(pnlTop, BorderLayout.NORTH);
-
+        
+        //bộ lọc số lượng
+        cbQtyFilter = new JComboBox<>(new String[]{"Tất cả số lượng", "Đã hết hàng (= 0)", "Còn hàng (> 0)"});
+        cbQtyFilter.setPreferredSize(new Dimension(150, 30));
+        // Thêm vào panel phía trên (cùng hàng với txtSearch và btnSearch)
+        pnlTop.add(new JLabel("Bộ lọc kho:"));
+        pnlTop.add(cbQtyFilter);
+        cbQtyFilter.addActionListener(e -> applyFilters());
         // --- CENTER: Bảng ---
-        String[] headers = {"ID", "Loại", "NCC", "Tên SP", "Mã Vạch", "Giá Nhập", "Giá Bán", "SL", "Ảnh", "Trạng Thái", "Ngày Tạo"};
+        String[] headers = {"ID", "Danh Mục", "Nhà Cung Cấp", "Tên Sản Phẩm", "Mã Vạch", "Giá Nhập", "Giá Bán", "Số Lượng", "Trạng Thái", "Ngày Tạo"};
         model = new DefaultTableModel(headers, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; } // Không cho sửa trực tiếp trên bảng
@@ -144,6 +153,7 @@ public class ProductPanel extends JPanel {
 
         pnlButtons.add(btnAdd); pnlButtons.add(btnEdit); pnlButtons.add(btnDelete); pnlButtons.add(btnRefresh);
         add(pnlButtons, BorderLayout.SOUTH);
+        
     }
 
     private JButton createBtn(String text) {
@@ -156,8 +166,22 @@ public class ProductPanel extends JPanel {
 
    private void fillDataToModel(java.util.List<Product> list) {
         model.setRowCount(0);
-        for (Product p : list) {
-            model.addRow(new Object[]{
+       for (Product p : list) {
+            String statusText;
+
+            if (p.getQuantity() <= 0) {
+                statusText = "Ngừng Bán";
+                // Nếu trong DB vẫn đang là 1 (Đang bán) nhưng số lượng = 0
+                if (p.getStatus() != 0) {
+                    p.setStatus(0); // Cập nhật đối tượng tạm thời
+                    dao.updateStatus(p.getProductId(), 0); // Lệnh lưu vào Database
+                }
+            } else {
+                statusText = (p.getStatus() == 1) ? "Đang bán" : "Ngừng bán";
+            }
+
+            // Thêm vào model để hiển thị
+           model.addRow(new Object[]{
                 p.getProductId(),
                 p.getCategoryName(), 
                 p.getSupplierName(), 
@@ -166,12 +190,29 @@ public class ProductPanel extends JPanel {
                 String.format("%,.0f", p.getImportPrice()), 
                 String.format("%,.0f", p.getSalePrice()),
                 p.getQuantity(),
-                p.getImage(),
-                // Hiển thị text theo int status
-                p.getStatus() == 1 ? "Đang bán" : "Ngừng bán", 
+                statusText, // Sử dụng biến statusText đã kiểm tra ràng buộc
                 p.getCreatedAt()
             });
         }
+    }
+    private void applyFilters() {
+        DefaultTableModel model = (DefaultTableModel) tblProducts.getModel();
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        tblProducts.setRowSorter(sorter);
+
+        int selectedIdx = cbQtyFilter.getSelectedIndex();
+
+        sorter.setRowFilter(new RowFilter<DefaultTableModel, Integer>() {
+            @Override
+            public boolean include(Entry<? extends DefaultTableModel, ? extends Integer> entry) {
+                // Cột "Số Lượng" trong bảng của bạn là cột index 7
+                int qty = Integer.parseInt(entry.getStringValue(7));
+
+                if (selectedIdx == 1) return qty <= 0; // Lọc sản phẩm hết hàng
+                if (selectedIdx == 2) return qty > 0;  // Lọc sản phẩm còn hàng
+                return true; // "Tất cả số lượng"
+            }
+        });
     }
     
 }

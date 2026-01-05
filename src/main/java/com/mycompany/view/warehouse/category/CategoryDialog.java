@@ -18,7 +18,7 @@ public class CategoryDialog extends JDialog {
             txtName.setText(c.getCategoryName());
             txtDesc.setText(c.getDescription());
         }
-        setTitle(c == null ? "Thêm loại sản phẩm" : "Sửa loại sản phẩm");
+        setTitle(c == null ? "Thêm Danh Mục sản phẩm" : "Sửa Danh Mục sản phẩm");
         pack();
         setLocationRelativeTo(parent);
     }
@@ -28,7 +28,7 @@ public class CategoryDialog extends JDialog {
         JPanel pnlForm = new JPanel(new GridLayout(2, 2, 10, 10));
         pnlForm.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        pnlForm.add(new JLabel("Tên loại:"));
+        pnlForm.add(new JLabel("Tên Danh Mục:"));
         txtName = new JTextField(20);
         pnlForm.add(txtName);
 
