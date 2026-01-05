@@ -75,8 +75,7 @@ public class CartPanel extends JPanel {
         pnlBill.add(lblSubTotal);
 
         pnlBill.add(new JLabel("Mã giảm giá:"));
-
-lblVoucherName = new JLabel("Chưa áp dụng", SwingConstants.RIGHT);
+        lblVoucherName = new JLabel("Chưa áp dụng", SwingConstants.RIGHT);
         pnlBill.add(lblVoucherName);
 
         pnlBill.add(new JLabel("Tiền giảm:"));

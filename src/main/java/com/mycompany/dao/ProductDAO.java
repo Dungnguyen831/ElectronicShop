@@ -180,16 +180,25 @@ public class ProductDAO {
     return selectBySql(sql, categoryId);
     }
     
-    public List<Product> searchProducts(String keyword, int categoryId) {
+   public List<Product> searchProducts(String keyword, int categoryId, int stockStatus) {
+
         List<Product> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT * FROM products WHERE status = 1");
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (product_name LIKE ? OR barcode LIKE ?)");
         }
+        
         if (categoryId > 0) {
             sql.append(" AND category_id = ?");
         }
+
+        if (stockStatus == 1) {
+            sql.append(" AND quantity > 0");
+        } else if (stockStatus == 2) {
+            sql.append(" AND quantity <= 0");
+        }
+
         sql.append(" ORDER BY created_at DESC");
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -212,11 +221,14 @@ public class ProductDAO {
                 p.setProductName(rs.getString("product_name"));
                 p.setBarcode(rs.getString("barcode"));
                 p.setSalePrice(rs.getDouble("sale_price"));
-                p.setQuantity(rs.getInt("quantity")); // Hàm này bạn viết đúng
+                p.setQuantity(rs.getInt("quantity"));
                 p.setImage(rs.getString("image"));
+                p.setStatus(rs.getInt("status"));
                 list.add(p);
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
 
@@ -247,4 +259,15 @@ public class ProductDAO {
     } catch (Exception e) { e.printStackTrace(); }
     return null;
 }
+   public boolean isProductExists(String productName) {
+        String sql = "SELECT COUNT(*) FROM products WHERE product_name = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, productName);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt(1) > 0;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
 }

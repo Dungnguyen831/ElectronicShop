@@ -112,4 +112,14 @@ public class SupplierDAO {
         }
         return list;
     }
+    public boolean isSupplierExists(String supplierName) {
+        String sql = "SELECT COUNT(*) FROM suppliers WHERE supplier_name = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, supplierName);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt(1) > 0;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
 }

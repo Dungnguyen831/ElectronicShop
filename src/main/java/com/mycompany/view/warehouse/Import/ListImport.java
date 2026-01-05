@@ -15,31 +15,44 @@ import javax.swing.table.TableRowSorter;
 
 public class ListImport extends JPanel {
 
+    private CardLayout cardLayout = new CardLayout();
+    private JPanel containerPanel;
+
     private JTextField txtSearch;
-    private JButton btnSearch;
-    private JTable tblImports;
-    private DefaultTableModel model;
+    private JButton btnSearch, btnRefresh, btnFilter;
     private JSpinner dateStart, dateEnd;
-    private JButton btnRefresh, btnFilter;
-    
+
+    private JTable tblImports;
+    private DefaultTableModel modelImports;
     private TableRowSorter<DefaultTableModel> sorter;
+
+    private JTable tblDetails;
+    private DefaultTableModel modelDetails;
+    private JLabel lblDetailHeader;
+
     private ImportDAO importDAO = new ImportDAO();
     private SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
     private DecimalFormat df = new DecimalFormat("#,###");
 
     public ListImport() {
-        initComponents();
+        setLayout(new BorderLayout());
+        containerPanel = new JPanel(cardLayout);
+
+        initListView();
+        initDetailView();
+
+        add(containerPanel, BorderLayout.CENTER);
         loadData();
     }
 
-    private void initComponents() {
-        setLayout(new BorderLayout(10, 10));
-        setBackground(Color.WHITE); // Sử dụng màu trắng mặc định nếu Style lỗi
-        setBorder(new EmptyBorder(15, 15, 15, 15));
+    private void initListView() {
+        JPanel listPanel = new JPanel(new BorderLayout(10, 10));
+        listPanel.setBackground(Style.COLOR_BG_RIGHT);
+        listPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        // --- 1. THANH CÔNG CỤ ---
+        // --- 1. THANH CÔNG CỤ (GIỮ NGUYÊN) ---
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
-        topPanel.setOpaque(false);
+        topPanel.setBackground(Style.COLOR_BG_RIGHT);
 
         topPanel.add(new JLabel("Từ khóa:"));
         txtSearch = new JTextField(15);
@@ -47,7 +60,7 @@ public class ListImport extends JPanel {
         topPanel.add(txtSearch);
 
         btnSearch = new JButton("Tìm");
-        btnSearch.setBackground(new Color(0, 123, 255));
+        btnSearch.setBackground(Style.COLOR_PRIMARY);
         btnSearch.setForeground(Color.WHITE);
         topPanel.add(btnSearch);
 
@@ -63,41 +76,50 @@ public class ListImport extends JPanel {
         topPanel.add(dateEnd);
 
         btnFilter = new JButton("Lọc Ngày");
-        btnFilter.setBackground(new Color(40, 167, 69));
+        btnFilter.setBackground(Style.COLOR_PRIMARY);
         btnFilter.setForeground(Color.WHITE);
         topPanel.add(btnFilter);
-        
+
         btnRefresh = new JButton("Làm mới");
         btnRefresh.setBackground(new Color(108, 117, 125));
         btnRefresh.setForeground(Color.WHITE);
         topPanel.add(btnRefresh);
-
-        add(topPanel, BorderLayout.NORTH);
-
-        // --- 2. BẢNG DỮ LIỆU ---
-        String[] columns = {"ID", "Thời Gian", "Nhà Cung Cấp", "Sản Phẩm", "Số Lượng", "Giá Nhập", "Tổng Tiền"};
-        model = new DefaultTableModel(columns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) { return false; }
-            
-            // Định nghĩa kiểu dữ liệu để Sorter hoạt động chính xác với số
-            @Override
-            public Class<?> getColumnClass(int columnIndex) {
-                if (columnIndex == 0 || columnIndex == 4) return Integer.class;
-                return Object.class;
-            }
+// --- 2. BẢNG DỮ LIỆU ---
+        String[] columns = {"ID Phiếu", "Thời Gian", "Nhà Cung Cấp","Tổng Tiền"};
+        modelImports = new DefaultTableModel(columns, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         
-        tblImports = new JTable(model);
+        tblImports = new JTable(modelImports);
         tblImports.setRowHeight(35);
-        
-        sorter = new TableRowSorter<>(model);
+        tblImports.getTableHeader().setFont(Style.FONT_BOLD);
+        sorter = new TableRowSorter<>(modelImports);
         tblImports.setRowSorter(sorter);
 
-        JScrollPane scrollPane = new JScrollPane(tblImports);
-        add(scrollPane, BorderLayout.CENTER);
+        // XỬ LÝ SỰ KIỆN CHUỘT: CLICK 1 LẦN & CLICK 2 LẦN
+        tblImports.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = tblImports.getSelectedRow();
+                if (row < 0) return;
+                
+                int modelRow = tblImports.convertRowIndexToModel(row);
+                
+                // 1 Click: Điền tên nhà cung cấp vào ô tìm kiếm (Cột 2)
+                String supplierName = modelImports.getValueAt(modelRow, 2).toString();
+                txtSearch.setText(supplierName);
 
-        // --- 3. SỰ KIỆN ---
+                // 2 Clicks: Mở bảng chi tiết
+                if (e.getClickCount() == 2) {
+                    showDetailView(modelRow);
+                }
+            }
+        });
+
+        listPanel.add(topPanel, BorderLayout.NORTH);
+        listPanel.add(new JScrollPane(tblImports), BorderLayout.CENTER);
+
+        // --- 3. GÁN SỰ KIỆN NÚT BẤM ---
         btnSearch.addActionListener(e -> applySearchFilter());
         txtSearch.addActionListener(e -> applySearchFilter());
 
@@ -108,84 +130,83 @@ public class ListImport extends JPanel {
                 JOptionPane.showMessageDialog(this, "Ngày bắt đầu không được lớn hơn ngày kết thúc!");
                 return;
             }
-            loadDataByDate(start, end);
+            loadDataByDate(start, end); // Gọi hàm lọc ngày mới
         });
 
         btnRefresh.addActionListener(e -> {
             txtSearch.setText("");
-            sorter.setRowFilter(null);
+            dateEnd.setValue(new Date());
             loadData();
+            sorter.setRowFilter(null);
         });
 
-        // Click dòng đổ vào ô tìm kiếm
-        tblImports.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int row = tblImports.getSelectedRow();
-                if (row >= 0) {
-                    int modelRow = tblImports.convertRowIndexToModel(row);
-                    txtSearch.setText(model.getValueAt(modelRow, 3).toString());
-                }
-            }
-        });
+        containerPanel.add(listPanel, "LIST");
+    }
+
+    private void initDetailView() {
+        JPanel detailPanel = new JPanel(new BorderLayout(10, 10));
+        detailPanel.setBackground(Color.WHITE);
+        detailPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(245, 245, 245));
+        headerPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        lblDetailHeader = new JLabel("CHI TIẾT PHIẾU");
+        lblDetailHeader.setFont(Style.FONT_BOLD);
+        
+        JButton btnBack = new JButton("<< Quay lại");
+        btnBack.addActionListener(e -> cardLayout.show(containerPanel, "LIST"));
+headerPanel.add(lblDetailHeader, BorderLayout.CENTER);
+        headerPanel.add(btnBack, BorderLayout.WEST);
+
+        modelDetails = new DefaultTableModel(new String[]{"Sản Phẩm", "Số Lượng", "Giá Nhập", "Thành Tiền"}, 0);
+        tblDetails = new JTable(modelDetails);
+        tblDetails.setRowHeight(30);
+
+        detailPanel.add(headerPanel, BorderLayout.NORTH);
+        detailPanel.add(new JScrollPane(tblDetails), BorderLayout.CENTER);
+
+        containerPanel.add(detailPanel, "DETAIL");
     }
 
     private void loadData() {
-        model.setRowCount(0);
-        try {
-            List<Object[]> data = importDAO.selectAllJoined();
-            for (Object[] row : data) {
-                processRow(row);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        modelImports.setRowCount(0);
+        List<Object[]> data = importDAO.selectAllImports();
+        for (Object[] row : data) formatAndAddRow(row);
     }
 
+    // SỬA LỖI LỌC NGÀY TẠI ĐÂY
     private void loadDataByDate(Date start, Date end) {
-        model.setRowCount(0);
-        try {
-            List<Object[]> data = importDAO.selectByDateRange(start, end);
-            if (data.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Không có dữ liệu!");
-            }
-            for (Object[] row : data) {
-                processRow(row);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        modelImports.setRowCount(0);
+        List<Object[]> data = importDAO.selectImportsByDate(start, end); // Dùng hàm mới trong DAO
+        if (data.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Không có dữ liệu trong khoảng thời gian này!");
         }
+        for (Object[] row : data) formatAndAddRow(row);
     }
 
-    // Hàm xử lý dữ liệu dòng để tránh lỗi ép kiểu (Cast Exception)
-    private void processRow(Object[] row) {
-        Object[] formattedRow = new Object[row.length];
-        
-        // ID
-        formattedRow[0] = row[0];
-        
-        // Thời gian
-        if (row[1] != null) {
-            formattedRow[1] = sdf.format(row[1]);
+    private void formatAndAddRow(Object[] row) {
+        if (row[1] instanceof Date) row[1] = sdf.format(row[1]);
+        if (row[3] instanceof Number) row[3] = df.format(row[3]);
+        modelImports.addRow(row);
+    }
+
+    private void showDetailView(int modelRow) {
+        int id = (int) modelImports.getValueAt(modelRow, 0);
+        String ncc = modelImports.getValueAt(modelRow, 2).toString();
+        String total = modelImports.getValueAt(modelRow, 3).toString();
+
+        lblDetailHeader.setText(" MÃ PHIẾU: #" + id + " | NCC: " + ncc + " | TỔNG: " + total);
+
+        modelDetails.setRowCount(0);
+        List<Object[]> details = importDAO.selectDetailsByImportId(id);
+        for (Object[] d : details) {
+            if (d[2] instanceof Number) d[2] = df.format(d[2]);
+            if (d[3] instanceof Number) d[3] = df.format(d[3]);
+            modelDetails.addRow(d);
         }
-        
-        // Nhà CC & Sản phẩm
-        formattedRow[2] = row[2];
-        formattedRow[3] = row[3];
-        
-        // Số lượng
-        formattedRow[4] = row[4];
-        
-        // Giá & Tổng tiền (Định dạng số có dấu phẩy)
-        try {
-            formattedRow[5] = df.format(Double.parseDouble(row[5].toString()));
-            formattedRow[6] = df.format(Double.parseDouble(row[6].toString()));
-        } catch (Exception e) {
-            formattedRow[5] = row[5];
-            formattedRow[6] = row[6];
-        }
-        
-        model.addRow(formattedRow);
+        cardLayout.show(containerPanel, "DETAIL");
     }
 
     private void applySearchFilter() {
@@ -193,8 +214,8 @@ public class ListImport extends JPanel {
         if (text.isEmpty()) {
             sorter.setRowFilter(null);
         } else {
-            // Lọc không phân biệt hoa thường trên tất cả các cột
-            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text));
+            // Lọc trên cột Nhà CC (cột 2)
+            sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text, 2));
         }
     }
 }

@@ -4,17 +4,12 @@ import java.awt.*;
 import javax.swing.*;
 
 public class CustomerPaymentPanel extends JPanel {
-
-    // --- Public fields để SaleFrame truy cập ---
     public JTextField txtPhone, txtName, txtEmail, txtAddress, txtVoucherCode;
     public JCheckBox chkUsePoints;
     public JLabel lblPointInfo;
-    
-    // ĐÃ THÊM 2 BIẾN NÀY ĐỂ SỬA LỖI
     public JLabel lblVoucherMsg; 
     public JLabel lblFinalTotal; 
     
-    // --- Callbacks ---
     private Runnable onFindCustomer;
     private Runnable onApplyVoucher;
     private Runnable onProcessOrder;
@@ -55,7 +50,6 @@ public class CustomerPaymentPanel extends JPanel {
         createLabel("Email:", 30, y+=80); txtEmail = createTextField(30, y+30, 490);
         createLabel("Địa chỉ:", 30, y+=80); txtAddress = createTextField(30, y+30, 490);
 
-        // Voucher
         JLabel lblVou = new JLabel("Mã Voucher (nếu có):");
         lblVou.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblVou.setBounds(30, y+=80, 200, 25);
@@ -69,14 +63,12 @@ public class CustomerPaymentPanel extends JPanel {
         btnApply.addActionListener(e -> onApplyVoucher.run());
         add(btnApply);
         
-        // Label thông báo Voucher
         lblVoucherMsg = new JLabel("");
         lblVoucherMsg.setFont(new Font("Segoe UI", Font.ITALIC, 12));
         lblVoucherMsg.setForeground(Color.RED);
         lblVoucherMsg.setBounds(30, y+65, 400, 20);
         add(lblVoucherMsg);
 
-        // Đổi điểm
         y += 80;
         chkUsePoints = new JCheckBox("Đổi điểm tích lũy?");
         chkUsePoints.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -90,7 +82,6 @@ public class CustomerPaymentPanel extends JPanel {
         lblPointInfo.setBounds(210, y, 250, 30);
         add(lblPointInfo);
         
-        // Tổng tiền cuối cùng
         y += 50;
         lblFinalTotal = new JLabel("THANH TOÁN: 0 đ");
         lblFinalTotal.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -98,18 +89,15 @@ public class CustomerPaymentPanel extends JPanel {
         lblFinalTotal.setBounds(30, y, 400, 30);
         add(lblFinalTotal);
 
-        // --- Buttons (ĐÃ SỬA TỌA ĐỘ) ---
         JButton btnConfirm = new JButton("THANH TOÁN & IN HÓA ĐƠN");
-        btnConfirm.setBackground(new Color(230, 126, 34)); // Màu cam
+        btnConfirm.setBackground(new Color(230, 126, 34)); 
         btnConfirm.setForeground(Color.WHITE);
         btnConfirm.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        // Giữ nguyên vị trí nút xác nhận
         btnConfirm.setBounds(30, y+50, 280, 50); 
         btnConfirm.addActionListener(e -> onProcessOrder.run());
         add(btnConfirm);
 
         JButton btnBack = new JButton("QUAY LẠI");
-        // Đẩy nút Back ra xa một chút (x=330) và tăng chiều rộng lên 150 cho đẹp
         btnBack.setBounds(330, y+50, 150, 50); 
         btnBack.addActionListener(e -> onBack.run());
         add(btnBack);

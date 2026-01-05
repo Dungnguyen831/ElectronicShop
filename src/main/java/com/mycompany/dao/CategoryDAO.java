@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CategoryDAO {
-
     public boolean insert(Category c) {
         String sql = "INSERT INTO categories (category_name, description) VALUES (?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -104,5 +103,14 @@ public class CategoryDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
-    
+    public boolean isCategoryExists(String categoryName) {
+        String sql = "SELECT COUNT(*) FROM categories WHERE category_name = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, categoryName);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt(1) > 0;
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
 }
