@@ -173,6 +173,7 @@ public class LoginFrame extends JFrame {
                     salesFrame.setVisible(true);
                     break;
 
+
         case 3: // WAREHOUSE (Thủ kho)
       //       Mở giao diện Kho
             new com.mycompany.view.warehouse.WarehouseMainFrame(u).setVisible(true);

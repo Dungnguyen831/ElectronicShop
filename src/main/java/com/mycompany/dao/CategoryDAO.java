@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CategoryDAO {
-
     public boolean insert(Category c) {
         String sql = "INSERT INTO categories (category_name, description) VALUES (?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -104,5 +103,4 @@ public class CategoryDAO {
         } catch (Exception e) { e.printStackTrace(); }
         return list;
     }
-    
 }

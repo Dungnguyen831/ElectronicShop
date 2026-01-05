@@ -105,4 +105,22 @@ public class VoucherDAO {
             rs.getInt("status")
         );
     }
+    
+    public boolean checkVoucherUsed(int customerId, int voucherId) {
+        String sql = "SELECT COUNT(*) FROM orders WHERE customer_id = ? AND voucher_id = ? AND status = 1";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, customerId);
+            ps.setInt(2, voucherId);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0; // Trả về true nếu đã sử dụng
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

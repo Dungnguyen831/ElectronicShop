@@ -4,7 +4,8 @@ import com.mycompany.dao.CategoryDAO;
 import com.mycompany.dao.ProductDAO;
 import com.mycompany.model.Category;
 import com.mycompany.model.Product;
-// import com.mycompany.util.Style; // <--- XÓA DÒNG NÀY NẾU BÁO ĐỎ (Vì có thể bạn chưa tạo class Style)
+
+import com.mycompany.view.Staff.component.ProductCard;
 
 import java.awt.*;
 import java.util.List;
@@ -15,12 +16,12 @@ public class ProductListPanel extends JPanel {
     private JPanel pnlGrid;
     private JTextField txtSearch;
     private JComboBox<Category> cboCategory;
+    private JComboBox<String> cboStock; 
     
     private ProductDAO productDAO = new ProductDAO();
     private CategoryDAO categoryDAO = new CategoryDAO();
     private Consumer<Product> onProductSelect;
 
-    // Constructor nhận vào hành động khi click sản phẩm
     public ProductListPanel(Consumer<Product> onProductSelect) {
         this.onProductSelect = onProductSelect;
         
@@ -30,74 +31,118 @@ public class ProductListPanel extends JPanel {
         
         initFilter();
         initGrid();
-        loadData(null, 0); // Load dữ liệu ban đầu
+        
+        // Load mặc định: Không từ khóa, Tất cả danh mục (0), Tất cả kho (0)
+        loadData("", 0, 0); 
     }
 
     private void initFilter() {
-        JPanel pnl = new JPanel(new BorderLayout(5, 0));
-        pnl.setBackground(Color.WHITE);
+        // Thanh bộ lọc dùng FlowLayout để xếp hàng ngang
+        JPanel pnlFilterBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        pnlFilterBar.setBackground(Color.WHITE);
+        pnlFilterBar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(230, 230, 230)));
         
+        // --- Ô TÌM KIẾM ---
         txtSearch = new JTextField(); 
         txtSearch.setPreferredSize(new Dimension(200, 35));
-        txtSearch.putClientProperty("JTextField.placeholderText", "Tìm sản phẩm...");
+        txtSearch.putClientProperty("JTextField.placeholderText", "Tìm tên hoặc mã vạch...");
         
+        // --- COMBOBOX LỌC KHO ---
+        cboStock = new JComboBox<>(new String[]{"Tất cả kho", "Còn hàng", "Hết hàng"});
+        cboStock.setPreferredSize(new Dimension(120, 35));
+
+        // --- COMBOBOX DANH MỤC ---
         cboCategory = new JComboBox<>();
         cboCategory.setPreferredSize(new Dimension(150, 35));
+        cboCategory.addItem(new Category(0, "Tất cả danh mục", "")); 
         for(Category c : categoryDAO.getAllCategories()) {
             cboCategory.addItem(c);
         }
         
-        JButton btn = new JButton("Tìm");
-        btn.setBackground(new Color(52, 152, 219));
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
+        // --- NÚT TÌM ---
+        JButton btnSearch = new JButton("Tìm");
+        btnSearch.setBackground(new Color(52, 152, 219));
+        btnSearch.setForeground(Color.WHITE);
+        btnSearch.setFocusPainted(false);
+        btnSearch.setPreferredSize(new Dimension(70, 35));
         
-        // Sự kiện tìm kiếm
-        btn.addActionListener(e -> search());
+        // --- THÊM VÀO PANEL ---
+        pnlFilterBar.add(txtSearch);
+        pnlFilterBar.add(new JLabel("Kho:"));
+        pnlFilterBar.add(cboStock);
+        pnlFilterBar.add(new JLabel("Loại:"));
+        pnlFilterBar.add(cboCategory);
+        pnlFilterBar.add(btnSearch);
+        
+        // --- SỰ KIỆN ---
+        btnSearch.addActionListener(e -> search());
         cboCategory.addActionListener(e -> search());
-        txtSearch.addActionListener(e -> search()); // Enter để tìm
+        cboStock.addActionListener(e -> search()); 
+        txtSearch.addActionListener(e -> search());
 
-        pnl.add(txtSearch, BorderLayout.CENTER);
-        pnl.add(cboCategory, BorderLayout.EAST);
-        pnl.add(btn, BorderLayout.WEST);
-        add(pnl, BorderLayout.NORTH);
+        add(pnlFilterBar, BorderLayout.NORTH);
     }
 
     private void initGrid() {
-        // GridLayout 0 hàng (tự động), 3 cột, khoảng cách 10px
-        pnlGrid = new JPanel(new GridLayout(0, 3, 10, 10)); 
+        // --- SỬA QUAN TRỌNG: DÙNG GRIDLAYOUT ---
+        // GridLayout(0, 3): 0 nghĩa là số hàng tự động sinh ra, 3 là cố định 3 cột
+        // Điều này đảm bảo nếu có nhiều sản phẩm nó sẽ tự xuống dòng, không bị trôi ngang
+        pnlGrid = new JPanel(new GridLayout(0, 3, 15, 15)); 
         pnlGrid.setBackground(Color.WHITE);
         
-        // Wrapper đẩy lưới lên trên cùng (tránh bị giãn khi ít SP)
+        // Wrapper đẩy nội dung lên trên cùng
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setBackground(Color.WHITE);
         wrapper.add(pnlGrid, BorderLayout.NORTH);
         
         JScrollPane scroll = new JScrollPane(wrapper);
         scroll.setBorder(null);
-        scroll.getVerticalScrollBar().setUnitIncrement(16);
+        scroll.getVerticalScrollBar().setUnitIncrement(20);
+        // Chỉ hiện thanh cuộn dọc
+        scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        
         add(scroll, BorderLayout.CENTER);
     }
 
     private void search() {
-        String kw = txtSearch.getText();
+        String kw = txtSearch.getText().trim();
         Category c = (Category) cboCategory.getSelectedItem();
         int catId = (c != null) ? c.getCategoryId() : 0;
-        loadData(kw, catId);
+        int stockStatus = cboStock.getSelectedIndex(); 
+        
+        loadData(kw, catId, stockStatus);
     }
 
-    public void loadData(String kw, int catId) {
+    public void loadData(String kw, int catId, int stockStatus) {
         pnlGrid.removeAll();
         
-        List<Product> list = productDAO.searchProducts(kw, catId);
-        for(Product p : list) {
-            // QUAN TRỌNG: Gọi ProductCard để hiển thị từng ô
-            // Bạn phải đảm bảo file ProductCard.java đã không còn lỗi đỏ
-            ProductCard card = new ProductCard(p, onProductSelect);
-            pnlGrid.add(card);
+        List<Product> list = productDAO.searchProducts(kw, catId, stockStatus);
+        
+        if (list.isEmpty()) {
+            // Hiển thị thông báo nếu không tìm thấy
+            JLabel lbl = new JLabel("Không tìm thấy sản phẩm nào!", SwingConstants.CENTER);
+            lbl.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+            lbl.setForeground(Color.GRAY);
+            // Với GridLayout, ta cần add vào wrapper hoặc chỉnh lại, 
+            // nhưng add tạm vào grid cũng hiện được ở ô đầu tiên
+            pnlGrid.add(lbl); 
+        } else {
+            for(Product p : list) {
+                ProductCard card = new ProductCard(p, onProductSelect);
+                pnlGrid.add(card);
+            }
         }
         
         pnlGrid.revalidate();
         pnlGrid.repaint();
+    }
+    
+    // Hàm phụ trợ để reset bộ lọc về mặc định (dùng sau khi thanh toán xong)
+    public void resetFilters() {
+        txtSearch.setText("");
+        cboCategory.setSelectedIndex(0);
+        cboStock.setSelectedIndex(0);
+        loadData("", 0, 0);
     }
 }
