@@ -124,7 +124,4 @@ String sql = "SELECT * FROM vouchers WHERE code LIKE ?";
         }
         return false;
     }
-
-
-           
 }

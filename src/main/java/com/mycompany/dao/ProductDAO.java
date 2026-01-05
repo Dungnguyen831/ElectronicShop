@@ -118,6 +118,8 @@ public class ProductDAO {
             return false;
         }
     }
+ 
+        
     private void setProductParams(PreparedStatement pstmt, Product p) throws SQLException {
         pstmt.setInt(1, p.getCategoryId());
         pstmt.setInt(2, p.getSupplierId());
@@ -125,15 +127,19 @@ public class ProductDAO {
         pstmt.setString(4, p.getBarcode());
         pstmt.setDouble(5, p.getImportPrice());
         pstmt.setDouble(6, p.getSalePrice());
-
-        // Đẩy số lượng vào tham số thứ 7
         pstmt.setInt(7, p.getQuantity());
         pstmt.setString(8, p.getImage());
-
-        // RÀNG BUỘC: Nếu số lượng <= 0, ép status về 0 (Ngừng bán)
-        int finalStatus = (p.getQuantity() <= 0) ? 0 : p.getStatus();
-        pstmt.setInt(9, finalStatus); 
+        pstmt.setInt(9, p.getStatus());
     }
+    public List<Product> selectByCategoryId(int categoryId) {
+        String sql = "SELECT p.*, c.category_name, s.supplier_name " +
+                     "FROM products p " +
+                     "LEFT JOIN categories c ON p.category_id = c.category_id " +
+                     "LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id " +
+                     "WHERE p.category_id = ?";
+        return selectBySql(sql, categoryId);
+    }
+
 
     private List<Product> selectBySql(String sql, Object... args) {
         List<Product> list = new ArrayList<>();
@@ -171,25 +177,29 @@ public class ProductDAO {
         }
         return list;
     }
-    public List<Product> selectByCategoryId(int categoryId) {
-    String sql = "SELECT p.*, c.category_name, s.supplier_name " +
-                 "FROM products p " +
-                 "LEFT JOIN categories c ON p.category_id = c.category_id " +
-                 "LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id " +
-                 "WHERE p.category_id = ?";
-    return selectBySql(sql, categoryId);
-    }
-    
-    public List<Product> searchProducts(String keyword, int categoryId) {
+     
+
+
+  
+    public List<Product> searchProducts(String keyword, int categoryId, int stockStatus) {
+
         List<Product> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder("SELECT * FROM products WHERE status = 1");
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (product_name LIKE ? OR barcode LIKE ?)");
         }
+        
         if (categoryId > 0) {
             sql.append(" AND category_id = ?");
         }
+
+        if (stockStatus == 1) {
+            sql.append(" AND quantity > 0");
+        } else if (stockStatus == 2) {
+            sql.append(" AND quantity <= 0");
+        }
+
         sql.append(" ORDER BY created_at DESC");
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -212,15 +222,17 @@ public class ProductDAO {
                 p.setProductName(rs.getString("product_name"));
                 p.setBarcode(rs.getString("barcode"));
                 p.setSalePrice(rs.getDouble("sale_price"));
-                p.setQuantity(rs.getInt("quantity")); // Hàm này bạn viết đúng
+                p.setQuantity(rs.getInt("quantity"));
                 p.setImage(rs.getString("image"));
+                p.setStatus(rs.getInt("status"));
                 list.add(p);
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
 
-    // --- HÀM NÀY BỊ THIẾU LOGIC, ĐÃ SỬA LẠI ---
     public Product getProductById(int id) {
         String sql = "SELECT * FROM products WHERE product_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -232,18 +244,16 @@ public class ProductDAO {
                 p.setProductId(rs.getInt("product_id"));
                 p.setProductName(rs.getString("product_name"));
                 p.setSalePrice(rs.getDouble("sale_price"));
-                
-                // --- DÒNG QUAN TRỌNG BẠN BỊ THIẾU ---
-                p.setQuantity(rs.getInt("quantity")); 
-                // ------------------------------------
-                
-                // Tiện thể lấy luôn mấy cái khác cho đủ bộ nếu cần
+                p.setQuantity(rs.getInt("quantity"));
                 p.setBarcode(rs.getString("barcode"));
                 p.setImage(rs.getString("image"));
-                
+                p.setStatus(rs.getInt("status"));
                 return p;
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
+
 }

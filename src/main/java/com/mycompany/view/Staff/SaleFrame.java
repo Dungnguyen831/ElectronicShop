@@ -230,7 +230,7 @@ pnlMain.add(pnlCart);
     
     Customer c = customerDAO.findByPhone(ph);
     if(c != null) {
-this.selectedCustomer = c;
+        this.selectedCustomer = c;
         pnlPayment.txtName.setText(c.getFullName());
         pnlPayment.txtEmail.setText(c.getEmail());
         pnlPayment.txtAddress.setText(c.getAddress());
@@ -316,7 +316,7 @@ if(ph.isEmpty()) { JOptionPane.showMessageDialog(this, "Nhập SĐT!"); return; 
 
         boolean ok = orderDAO.createOrder(currentUser.getUserId(), c.getCustomerId(), appliedVoucherId, finalTotal, cartItems, ptsUsed);
         if(ok) {
-            pnlProductList.loadData(null, 0);
+            pnlProductList.loadData(null, 0,0);
             JOptionPane.showMessageDialog(this, "THANH TOÁN THÀNH CÔNG!");
             resetAll();
             
