@@ -26,6 +26,8 @@ public class CustomerPaymentPanel extends JPanel {
         setBackground(Color.WHITE);
         
         initUI();
+        // Mặc định khóa các trường khi chưa bấm "Tìm"
+        setFieldsEditable(false);
     }
 
     private void initUI() {
@@ -101,6 +103,19 @@ public class CustomerPaymentPanel extends JPanel {
         btnBack.setBounds(330, y+50, 150, 50); 
         btnBack.addActionListener(e -> onBack.run());
         add(btnBack);
+    }
+
+    // Hàm mới để kiểm soát việc nhập liệu
+    public void setFieldsEditable(boolean canEdit) {
+        txtName.setEditable(canEdit);
+        txtEmail.setEditable(canEdit);
+        txtAddress.setEditable(canEdit);
+        
+        // Đổi màu nền để phân biệt ô bị khóa
+        Color bgColor = canEdit ? Color.WHITE : new Color(245, 245, 245);
+        txtName.setBackground(bgColor);
+        txtEmail.setBackground(bgColor);
+        txtAddress.setBackground(bgColor);
     }
 
     private void createLabel(String t, int x, int y) {
