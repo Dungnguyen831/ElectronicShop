@@ -10,7 +10,7 @@ import javax.swing.*;
 
 public class ProductCard extends JPanel {
 
-    private final String IMAGE_DIR = "D:\\Documents\\NetBeansProjects\\ElectronicShop\\src\\main\\java\\com\\mycompany\\util\\upload\\";
+    private final String IMAGE_DIR = "D:\\NetBeans-23\\ElectronicShop\\src\\main\\java\\com\\mycompany\\util\\upload\\";
     
     private final int FIXED_WIDTH = 220; 
     // GIẢM chiều cao ảnh xuống một chút (từ 180 -> 170 hoặc 165)
