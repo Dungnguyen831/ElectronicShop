@@ -207,6 +207,7 @@ public class AdminMainFrame extends JFrame implements ActionListener {
         else if (e.getSource() == btnVoucher) cardLayout.show(contentPanel, "VOUCHER");
         else if (e.getSource() == btnUser) cardLayout.show(contentPanel, "USER");
         else if (e.getSource() == btnCustomer) cardLayout.show(contentPanel, "CUSTOMER");
+        else if (e.getSource() == btnOrder) cardLayout.show(contentPanel, "ORDER");
 
     }
 }

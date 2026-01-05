@@ -30,7 +30,7 @@ public class ProductDialog extends JDialog {
     private SupplierDAO supDAO = new SupplierDAO();
 
     // Đường dẫn lưu file ảnh
-    private final String UPLOAD_DIR = "D:\\Desktop\\java\\ElectronicShop\\src\\main\\java\\com\\mycompany\\util\\upload";
+    private final String UPLOAD_DIR = "D:\\NetBeans-23\\ElectronicShop\\src\\main\\java\\com\\mycompany\\util\\upload";
 
     public ProductDialog(Frame parent, Product p) {
         super(parent, true);
